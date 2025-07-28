@@ -28,7 +28,7 @@ async fn main() -> Result<(), Error> {
     // Spawn the background task that runs the connection
     tokio::spawn(async move {
         if let Err(e) = connection.await {
-            eprintln!("connection error: {}", e);
+            eprintln!("connection error: {e}");
         }
     });
 
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Error> {
         .await?;
 
     let new_id: i32 = row.get(0);
-    println!("Inserted row id={}", new_id);
+    println!("Inserted row id={new_id}");
 
     Ok(())
 }
