@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use dotenvy::dotenv;
 use std::env;
 use tokio_postgres::{Error, NoTls};
@@ -33,19 +33,38 @@ async fn main() -> Result<(), Error> {
     });
 
     // Prepare data ----------------------------------------------------------
-    let name = "LaunchParty";
-    let ts: NaiveDateTime = chrono::Local::now().naive_local();
+    let name = "Tournament";
+    let now = chrono::Local::now().naive_local();
 
-    // Insert and get the ID back in one operation --------------------------
+    // Separate the date and time components
+    let date: NaiveDate = now.date();
+    let time: NaiveTime = now.time();
+
+    // Insert with separate date and time columns ----------------------------
     let row = client
         .query_one(
-            "INSERT INTO events (name, date_time) VALUES ($1, $2) RETURNING id",
-            &[&name, &ts],
+            "INSERT INTO events (name, date, time) VALUES ($1, $2, $3) RETURNING id",
+            &[&name, &date, &time],
         )
         .await?;
 
     let new_id: i32 = row.get(0);
     println!("Inserted row id={new_id}");
+
+    // Query the inserted data -----------------------------------------------
+    let event = client
+        .query_one("SELECT * FROM events WHERE id = ($1)", &[&new_id])
+        .await?;
+
+    let retrieved_name: String = event.get(1);
+    let retrieved_date: NaiveDate = event.get(2);
+    let retrieved_time: NaiveTime = event.get(3);
+
+    println!("Name: {retrieved_name}, Date: {retrieved_date}, Time: {retrieved_time}");
+
+    // If you need to reconstruct a NaiveDateTime from the separate components
+    let reconstructed_datetime = NaiveDateTime::new(retrieved_date, retrieved_time);
+    println!("Reconstructed datetime: {reconstructed_datetime}");
 
     Ok(())
 }

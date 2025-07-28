@@ -1,5 +1,6 @@
 CREATE TABLE events (
   id SERIAL PRIMARY KEY,
   name VARCHAR(64) NOT NULL,
-  date_time TIMESTAMP NOT NULL
+  date DATE NOT NULL,
+  time TIME NOT NULL
 );
