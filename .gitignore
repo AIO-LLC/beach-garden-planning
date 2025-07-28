@@ -28,8 +28,9 @@
 **/yarn-debug.log*
 **/yarn-error.log*
 
-# local env files
+# env files
 **/.env*.local
+**/.env
 
 # vercel
 **/.vercel
@@ -46,3 +47,4 @@
 # Backend gitignore
 
 **/target/
+**/postgres_data/
