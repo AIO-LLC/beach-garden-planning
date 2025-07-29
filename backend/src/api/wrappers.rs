@@ -8,7 +8,7 @@ use chrono::{NaiveDate, NaiveTime};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct Event {
+pub struct NewEvent {
     name: String,
     date: NaiveDate,
     time: NaiveTime,
@@ -16,7 +16,7 @@ pub struct Event {
 
 pub async fn insert_into_events(
     State(state): State<AppState>,
-    Json(payload): Json<Event>,
+    Json(payload): Json<NewEvent>,
 ) -> Result<Json<i32>, ApiError> {
     let client = state.pool.get().await?;
     let id =

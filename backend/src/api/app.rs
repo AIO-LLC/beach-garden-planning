@@ -1,4 +1,4 @@
-use crate::api::rest;
+use crate::api::wrappers;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -72,10 +72,10 @@ impl IntoResponse for ApiError {
 
 pub async fn router() -> Router {
     Router::new()
-        .route("/events", post(rest::insert_into_events))
+        .route("/events", post(wrappers::insert_into_events))
         .route(
             "/events/{data}",
-            get(rest::get_day_events).delete(rest::delete_event),
+            get(wrappers::get_day_events).delete(wrappers::delete_event),
         )
         .with_state(build_state().await)
 }
