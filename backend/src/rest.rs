@@ -47,8 +47,10 @@ pub async fn build_state() -> AppState {
         env::var("POSTGRES_DB").expect("Undefined POSTGRES_DB environment variable");
     let postgres_password: String =
         env::var("POSTGRES_PASSWORD").expect("Undefined POSTGRES_PASSWORD environment variable");
-    let postgres_port: String =
-        env::var("POSTGRES_PORT").expect("Undefined POSTGRES_PORT environment variable");
+    let postgres_port: u16 = str::parse(
+        &env::var("POSTGRES_PORT").expect("Undefined POSTGRES_PORT environment variable"),
+    )
+    .unwrap();
 
     let mut cfg = deadpool_postgres::Config::new();
     cfg.host = Some("localhost".into());
@@ -83,19 +85,19 @@ pub async fn insert_into_events(
 
 pub async fn get_day_events(
     State(state): State<AppState>,
-    Path(date): Path<NaiveDate>,
+    Path(data): Path<NaiveDate>,
 ) -> Result<Json<Vec<models::Event>>, ApiError> {
     let client = state.pool.get().await?;
-    let events = queries::get_day_events(&client, date).await?;
+    let events = queries::get_day_events(&client, data).await?;
     Ok(Json(events))
 }
 
 pub async fn delete_event(
     State(state): State<AppState>,
-    Path(id): Path<i32>,
+    Path(data): Path<i32>,
 ) -> Result<StatusCode, ApiError> {
     let client = state.pool.get().await?;
-    let affected = queries::delete_event(&client, id).await?;
+    let affected = queries::delete_event(&client, data).await?;
     if affected == 1 {
         Ok(StatusCode::NO_CONTENT)
     } else {
