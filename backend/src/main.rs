@@ -26,7 +26,7 @@ async fn main() -> Result<(), Error> {
     let time: NaiveTime = now.time();
 
     // Insert with separate date and time columns ----------------------------
-    let new_id: i32 = insert_into_events(&client, name, date, time).await;
+    let new_id: i32 = insert_into_events(&client, name, date, time).await?;
 
     // Query the inserted data -----------------------------------------------
     let event = client

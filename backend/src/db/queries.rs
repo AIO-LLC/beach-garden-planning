@@ -1,19 +1,17 @@
 use chrono::{NaiveDate, NaiveTime};
-use tokio_postgres::Client;
+use tokio_postgres::{Client, Error, Row, Statement};
 
 pub async fn insert_into_events(
     client: &Client,
     name: &str,
     date: NaiveDate,
     time: NaiveTime,
-) -> i32 {
-    let row = client
-        .query_one(
-            "INSERT INTO events (name, date, time) VALUES ($1, $2, $3) RETURNING id",
-            &[&name, &date, &time],
-        )
-        .await
-        .expect("Couldn't insert into events table");
+) -> Result<i32, Error> {
+    let stmt: Statement = client
+        .prepare("INSERT INTO events (name, date, time) VALUES ($1, $2, $3) RETURNING id")
+        .await?;
 
-    row.get(0)
+    let rows: Vec<Row> = client.query(&stmt, &[&name, &date, &time]).await?;
+
+    Ok(rows[0].get(0))
 }
