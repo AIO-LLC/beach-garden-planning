@@ -36,3 +36,8 @@ pub async fn get_day_events(client: &Client, date: NaiveDate) -> Result<Vec<Even
         })
         .collect()
 }
+
+pub async fn delete_event(client: &Client, id: i32) -> Result<u64, Error> {
+    let stmt: Statement = client.prepare("DELETE FROM events WHERE id = $1").await?;
+    client.execute(&stmt, &[&id]).await
+}
