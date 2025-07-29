@@ -14,8 +14,10 @@ async fn main() -> Result<(), Error> {
 
     let app = Router::new()
         .route("/events", post(rest::insert_into_events))
-        .route("/events/{date}", get(rest::get_day_events))
-        .route("/events/{id}", delete(rest::delete_event))
+        .route(
+            "/events/{data}",
+            get(rest::get_day_events).delete(rest::delete_event),
+        )
         .with_state(state);
 
     let addr: SocketAddr = "0.0.0.0:8080".parse().expect("");
