@@ -1,6 +1,6 @@
 ---
 name: User Story Template
-about: Complete user story template with DoR, AC & DoD
+about: Complete user story template with DoR, AC & DoD.
 title: ''
 labels: ''
 assignees: ''
