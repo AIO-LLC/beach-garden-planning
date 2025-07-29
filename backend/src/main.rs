@@ -4,7 +4,7 @@ use chrono::{NaiveDate, NaiveTime};
 use tokio_postgres::Error;
 
 use crate::db::connection::connect_to_db;
-use crate::db::queries::insert_into_events;
+use crate::db::queries::{get_day_events, insert_into_events};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
@@ -18,7 +18,7 @@ async fn main() -> Result<(), Error> {
     });
 
     // Prepare data ----------------------------------------------------------
-    let name = "Training";
+    let name = "Birthday";
     let now = chrono::Local::now().naive_local();
 
     // Separate the date and time components
@@ -38,6 +38,8 @@ async fn main() -> Result<(), Error> {
     let retrieved_time: NaiveTime = event.get(3);
 
     println!("Name: {retrieved_name}, Date: {retrieved_date}, Time: {retrieved_time}");
+
+    println!("{:?}", get_day_events(&client, date).await);
 
     Ok(())
 }
