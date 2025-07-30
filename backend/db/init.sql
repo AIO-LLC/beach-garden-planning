@@ -1,11 +1,22 @@
 CREATE TABLE members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email VARCHAR(255) NOT NULL UNIQUE,
-  first_name VARCHAR(64) NOT NULL,
-  last_name VARCHAR(64) NOT NULL,
+  first_name VARCHAR(63) NOT NULL,
+  last_name VARCHAR(63) NOT NULL,
   gender CHAR(1) NOT NULL,
   birth_date DATE NOT NULL,
-  phone VARCHAR(15) NOT NULL,
-  fft_license CHAR(8)
-  signup_date DATE
+  email VARCHAR(255) NOT NULL UNIQUE,
+  phone VARCHAR(15) NOT NULL, -- E.164 format, digits only
+  fft_license CHAR(8),
+  signup_date DATE,
+  profile_picture VARCHAR(255) -- S3 key
+);
+
+CREATE TABLE addresses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  line_1 VARCHAR(127) NOT NULL,
+  line_2 VARCHAR(127),
+  postal_code VARCHAR(6) NOT NULL,
+  city VARCHAR(63) NOT NULL,
+  country VARCHAR(31) NOT NULL
 );
