@@ -7,8 +7,8 @@ CREATE TABLE members (
   email VARCHAR(255) NOT NULL UNIQUE,
   phone VARCHAR(15) NOT NULL, -- E.164 format, digits only
   fft_license CHAR(8),
-  signup_date DATE,
-  profile_picture VARCHAR(255) -- S3 key
+  profile_picture VARCHAR(255), -- S3 key
+  signup_date DATE
 );
 
 CREATE TABLE addresses (
