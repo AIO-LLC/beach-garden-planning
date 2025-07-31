@@ -72,10 +72,10 @@ impl IntoResponse for ApiError {
 
 pub async fn router() -> Router {
     Router::new()
-        .route("/events", post(wrappers::insert_into_events))
+        .route("/member", post(wrappers::add_member))
         .route(
-            "/events/{data}",
-            get(wrappers::get_day_events).delete(wrappers::delete_event),
+            "/member/{id}",
+            get(wrappers::get_member).delete(wrappers::delete_member),
         )
         .with_state(build_state().await)
 }
