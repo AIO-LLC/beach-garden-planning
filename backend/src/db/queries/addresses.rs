@@ -29,12 +29,12 @@ pub async fn add_address(client: &Client, address: &Address) -> Result<Uuid, Err
     rows[0].try_get("id")
 }
 
-pub async fn get_address(client: &Client, id: Uuid) -> Result<Address, Error> {
+pub async fn get_address_by_member_id(client: &Client, member_id: Uuid) -> Result<Address, Error> {
     let stmt: Statement = client
-        .prepare("SELECT * FROM addresses WHERE id = $1")
+        .prepare("SELECT * FROM addresses WHERE member_id = $1")
         .await?;
 
-    let rows: Vec<Row> = client.query(&stmt, &[&id]).await?;
+    let rows: Vec<Row> = client.query(&stmt, &[&member_id]).await?;
 
     Ok(Address {
         id: rows[0].try_get("id")?,

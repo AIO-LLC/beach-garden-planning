@@ -42,12 +42,12 @@ pub async fn add_address(
     Ok(Json(id))
 }
 
-pub async fn get_address(
+pub async fn get_address_by_member_id(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Address>, ApiError> {
     let client: Client = state.pool.get().await?;
-    let address: Address = addresses::get_address(&client, id).await?;
+    let address: Address = addresses::get_address_by_member_id(&client, id).await?;
     Ok(Json(address))
 }
 
