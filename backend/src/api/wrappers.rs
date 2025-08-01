@@ -1,6 +1,6 @@
 use crate::api::app::{ApiError, AppState};
 use crate::db::models::Member;
-use crate::db::queries;
+use crate::db::queries::members;
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
@@ -26,7 +26,7 @@ pub async fn add_member(
     Json(payload): Json<NewMember>,
 ) -> Result<Json<Uuid>, ApiError> {
     let client = state.pool.get().await?;
-    let id = queries::add_member(
+    let id = members::add_member(
         &client,
         &Member {
             id: None,
@@ -50,7 +50,7 @@ pub async fn get_member(
     Path(data): Path<Uuid>,
 ) -> Result<Json<Member>, ApiError> {
     let client = state.pool.get().await?;
-    let member = queries::get_member(&client, data).await?;
+    let member = members::get_member(&client, data).await?;
     Ok(Json(member))
 }
 
@@ -59,7 +59,7 @@ pub async fn delete_member(
     Path(data): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     let client = state.pool.get().await?;
-    let affected = queries::delete_member(&client, data).await?;
+    let affected = members::delete_member(&client, data).await?;
     if affected == 1 {
         Ok(StatusCode::NO_CONTENT)
     } else {
