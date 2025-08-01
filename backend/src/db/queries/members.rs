@@ -69,7 +69,7 @@ pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
 }
 
 pub async fn update_member(client: &Client, updated_member: &Member) -> Result<u64, Error> {
-    let stmt: Statement = client.prepare("UPDATE members SET first_name = $1, last_name = $2, gender = $3, birth_date = $4, email = $5, phone = $6, fft_license = $7, profile_picture = $8 WHERE id = $9 RETURNING id").await?;
+    let stmt: Statement = client.prepare("UPDATE members SET first_name = $1, last_name = $2, gender = $3, birth_date = $4, email = $5, phone = $6, fft_license = $7, profile_picture = $8 WHERE id = $8").await?;
 
     client
         .execute(
