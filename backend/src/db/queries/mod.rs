@@ -1,2 +1,2 @@
-//pub mod addresses;
+pub mod addresses;
 pub mod members;

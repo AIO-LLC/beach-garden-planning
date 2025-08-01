@@ -1,4 +1,4 @@
-use crate::api::wrappers::members;
+use crate::api::wrappers;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -54,7 +54,7 @@ pub enum ApiError {
     Db(#[from] tokio_postgres::Error),
     #[error("pool error")]
     Pool(#[from] deadpool_postgres::PoolError),
-    #[error("event not found")]
+    #[error("not found")]
     NotFound,
 }
 
@@ -72,10 +72,15 @@ impl IntoResponse for ApiError {
 
 pub async fn router() -> Router {
     Router::new()
-        .route("/member", post(members::add_member))
+        .route("/member", post(wrappers::members::add_member))
         .route(
             "/member/{id}",
-            get(members::get_member).delete(members::delete_member),
+            get(wrappers::members::get_member).delete(wrappers::members::delete_member),
+        )
+        .route("/address", post(wrappers::addresses::add_address))
+        .route(
+            "/address/{id}",
+            get(wrappers::addresses::get_address).delete(wrappers::addresses::delete_address),
         )
         .with_state(build_state().await)
 }

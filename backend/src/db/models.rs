@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 pub struct Member {
     pub id: Option<Uuid>,
     pub first_name: String,
@@ -16,12 +16,13 @@ pub struct Member {
     pub signup_date: Option<NaiveDate>,
 }
 
-//pub struct Address {
-//    pub id: Option<Uuid>,
-//    pub member_id: Option<Uuid>,
-//    pub line_1: String,
-//    pub line_2: Option<String>,
-//    pub postal_code: String,
-//    pub city: String,
-//    pub country: String,
-//}
+#[derive(Serialize)]
+pub struct Address {
+    pub id: Option<Uuid>,
+    pub member_id: Uuid,
+    pub line_1: String,
+    pub line_2: Option<String>,
+    pub postal_code: String,
+    pub city: String,
+    pub country: String,
+}
