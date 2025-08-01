@@ -54,6 +54,15 @@ pub async fn get_member(
     Ok(Json(member))
 }
 
+pub async fn get_all_members(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Member>>, ApiError> {
+    let client = state.pool.get().await?;
+    let members = members::get_all_members(&client).await?;
+    Ok(Json(members))
+}
+
+
 pub async fn delete_member(
     State(state): State<AppState>,
     Path(data): Path<Uuid>,

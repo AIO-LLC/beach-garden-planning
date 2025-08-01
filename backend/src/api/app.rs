@@ -1,12 +1,12 @@
 use crate::api::wrappers;
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use axum::{
-    routing::{get, post},
     Router,
+    routing::{get, post},
 };
 use deadpool_postgres;
 use deadpool_postgres::{ManagerConfig, Pool, RecyclingMethod, Runtime};
@@ -73,6 +73,7 @@ impl IntoResponse for ApiError {
 pub async fn router() -> Router {
     Router::new()
         .route("/member", post(wrappers::members::add_member))
+        .route("/members", get(wrappers::members::get_all_members))
         .route(
             "/member/{id}",
             get(wrappers::members::get_member).delete(wrappers::members::delete_member),
@@ -80,7 +81,8 @@ pub async fn router() -> Router {
         .route("/address", post(wrappers::addresses::add_address))
         .route(
             "/address/{id}",
-            get(wrappers::addresses::get_address_by_member_id).delete(wrappers::addresses::delete_address),
+            get(wrappers::addresses::get_address_by_member_id)
+                .delete(wrappers::addresses::delete_address),
         )
         .with_state(build_state().await)
 }

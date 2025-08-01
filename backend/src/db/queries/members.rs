@@ -40,20 +40,41 @@ pub async fn get_member(client: &Client, id: Uuid) -> Result<Member, Error> {
         .prepare("SELECT * FROM members WHERE id = $1")
         .await?;
 
-    let rows: Vec<Row> = client.query(&stmt, &[&id]).await?;
+    let row: Row = client.query_one(&stmt, &[&id]).await?;
 
     Ok(Member {
-        id: rows[0].try_get("id")?,
-        first_name: rows[0].try_get("first_name")?,
-        last_name: rows[0].try_get("last_name")?,
-        gender: rows[0].try_get("gender")?,
-        birth_date: rows[0].try_get("birth_date")?,
-        email: rows[0].try_get("email")?,
-        phone: rows[0].try_get("phone")?,
-        fft_license: rows[0].try_get("fft_license")?,
-        profile_picture: rows[0].try_get("profile_picture")?,
-        signup_date: rows[0].try_get("signup_date")?,
+        id: row.try_get("id")?,
+        first_name: row.try_get("first_name")?,
+        last_name: row.try_get("last_name")?,
+        gender: row.try_get("gender")?,
+        birth_date: row.try_get("birth_date")?,
+        email: row.try_get("email")?,
+        phone: row.try_get("phone")?,
+        fft_license: row.try_get("fft_license")?,
+        profile_picture: row.try_get("profile_picture")?,
+        signup_date: row.try_get("signup_date")?,
     })
+}
+
+pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
+    let rows: Vec<Row> = client.query("SELECT * FROM members", &[]).await?;
+
+    rows.into_iter()
+        .map(|row| -> Result<Member, Error> {
+            Ok(Member {
+                id: row.try_get("id")?,
+                first_name: row.try_get("first_name")?,
+                last_name: row.try_get("last_name")?,
+                gender: row.try_get("gender")?,
+                birth_date: row.try_get("birth_date")?,
+                email: row.try_get("email")?,
+                phone: row.try_get("phone")?,
+                fft_license: row.try_get("fft_license")?,
+                profile_picture: row.try_get("profile_picture")?,
+                signup_date: row.try_get("signup_date")?,
+            })
+        })
+        .collect()
 }
 
 pub async fn delete_member(client: &Client, id: Uuid) -> Result<u64, Error> {
