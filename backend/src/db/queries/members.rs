@@ -7,17 +7,8 @@ pub async fn add_member(client: &Client, member: &Member) -> Result<Uuid, Error>
         .prepare("INSERT INTO members (first_name, last_name, gender, birth_date, email, phone, fft_license, profile_picture) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id")
         .await?;
 
-    let fft_license: &Option<String> = match member.fft_license {
-        Some(ref s) if s.is_empty() => &None,
-        _ => &member.fft_license,
-    };
-    let profile_picture: &Option<String> = match member.profile_picture {
-        Some(ref s) if s.is_empty() => &None,
-        _ => &member.profile_picture,
-    };
-
-    let rows: Vec<Row> = client
-        .query(
+    let row: Row = client
+        .query_one(
             &stmt,
             &[
                 &member.first_name,
@@ -26,13 +17,13 @@ pub async fn add_member(client: &Client, member: &Member) -> Result<Uuid, Error>
                 &member.birth_date,
                 &member.email,
                 &member.phone,
-                fft_license,
-                profile_picture,
+                &member.fft_license,
+                &member.profile_picture,
             ],
         )
         .await?;
 
-    rows[0].try_get("id")
+    row.try_get("id")
 }
 
 pub async fn get_member(client: &Client, id: Uuid) -> Result<Member, Error> {
@@ -75,6 +66,27 @@ pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
             })
         })
         .collect()
+}
+
+pub async fn update_member(client: &Client, updated_member: &Member) -> Result<u64, Error> {
+    let stmt: Statement = client.prepare("UPDATE members SET first_name = $1, last_name = $2, gender = $3, birth_date = $4, email = $5, phone = $6, fft_license = $7, profile_picture = $8 WHERE id = $9 RETURNING id").await?;
+
+    client
+        .execute(
+            &stmt,
+            &[
+                &updated_member.first_name,
+                &updated_member.last_name,
+                &updated_member.gender,
+                &updated_member.birth_date,
+                &updated_member.email,
+                &updated_member.phone,
+                &updated_member.fft_license,
+                &updated_member.profile_picture,
+                &updated_member.id
+            ],
+        )
+        .await
 }
 
 pub async fn delete_member(client: &Client, id: Uuid) -> Result<u64, Error> {

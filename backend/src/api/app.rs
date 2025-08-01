@@ -76,7 +76,9 @@ pub async fn router() -> Router {
         .route("/members", get(wrappers::members::get_all_members))
         .route(
             "/member/{id}",
-            get(wrappers::members::get_member).delete(wrappers::members::delete_member),
+            get(wrappers::members::get_member)
+            .patch(wrappers::members::update_member)
+            .delete(wrappers::members::delete_member),
         )
         .route("/address", post(wrappers::addresses::add_address))
         .route(
