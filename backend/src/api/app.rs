@@ -82,9 +82,10 @@ pub async fn router() -> Router {
         )
         .route("/address", post(wrappers::addresses::add_address))
         .route(
-            "/address/{id}",
+            "/address/{member_id}",
             get(wrappers::addresses::get_address_by_member_id)
-                .delete(wrappers::addresses::delete_address),
+            .patch(wrappers::addresses::update_address_by_member_id)
+            .delete(wrappers::addresses::delete_address_by_member_id),
         )
         .with_state(build_state().await)
 }

@@ -12,8 +12,8 @@ pub async fn add_address(client: &Client, address: &Address) -> Result<Uuid, Err
         _ => &address.line_2,
     };
 
-    let rows: Vec<Row> = client
-        .query(
+    let row: Row = client
+        .query_one(
             &stmt,
             &[
                 &address.member_id,
@@ -26,7 +26,7 @@ pub async fn add_address(client: &Client, address: &Address) -> Result<Uuid, Err
         )
         .await?;
 
-    rows[0].try_get("id")
+    row.try_get("id")
 }
 
 pub async fn get_address_by_member_id(client: &Client, member_id: Uuid) -> Result<Address, Error> {
@@ -34,22 +34,40 @@ pub async fn get_address_by_member_id(client: &Client, member_id: Uuid) -> Resul
         .prepare("SELECT * FROM addresses WHERE member_id = $1")
         .await?;
 
-    let rows: Vec<Row> = client.query(&stmt, &[&member_id]).await?;
+    let row: Row = client.query_one(&stmt, &[&member_id]).await?;
 
     Ok(Address {
-        id: rows[0].try_get("id")?,
-        member_id: rows[0].try_get("member_id")?,
-        line_1: rows[0].try_get("line_1")?,
-        line_2: rows[0].try_get("line_2")?,
-        postal_code: rows[0].try_get("postal_code")?,
-        city: rows[0].try_get("city")?,
-        country: rows[0].try_get("country")?,
+        id: row.try_get("id")?,
+        member_id: row.try_get("member_id")?,
+        line_1: row.try_get("line_1")?,
+        line_2: row.try_get("line_2")?,
+        postal_code: row.try_get("postal_code")?,
+        city: row.try_get("city")?,
+        country: row.try_get("country")?,
     })
 }
 
-pub async fn delete_address(client: &Client, id: Uuid) -> Result<u64, Error> {
+pub async fn update_address_by_member_id(client: &Client, updated_address: &Address) -> Result<u64, Error> {
+    let stmt: Statement = client.prepare("UPDATE addresses SET line_1 = $1, line_2 = $2, postal_code = $3, city = $4, country = $5 WHERE member_id = $6").await?;
+
+    client
+        .execute(
+            &stmt,
+            &[
+                &updated_address.line_1,
+                &updated_address.line_2,
+                &updated_address.postal_code,
+                &updated_address.city,
+                &updated_address.country,
+                &updated_address.member_id
+            ],
+        )
+        .await
+}
+
+pub async fn delete_address_by_member_id(client: &Client, member_id: Uuid) -> Result<u64, Error> {
     let stmt: Statement = client
-        .prepare("DELETE FROM addresses WHERE id = $1")
+        .prepare("DELETE FROM addresses WHERE member_id = $1")
         .await?;
-    client.execute(&stmt, &[&id]).await
+    client.execute(&stmt, &[&member_id]).await
 }
