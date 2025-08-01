@@ -1,4 +1,4 @@
-use crate::api::wrappers;
+use crate::api::wrappers::members;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -72,10 +72,10 @@ impl IntoResponse for ApiError {
 
 pub async fn router() -> Router {
     Router::new()
-        .route("/member", post(wrappers::add_member))
+        .route("/member", post(members::add_member))
         .route(
             "/member/{id}",
-            get(wrappers::get_member).delete(wrappers::delete_member),
+            get(members::get_member).delete(members::delete_member),
         )
         .with_state(build_state().await)
 }
