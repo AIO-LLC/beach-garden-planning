@@ -70,14 +70,17 @@ impl IntoResponse for ApiError {
     }
 }
 
-pub async fn router() -> Router {
+pub async fn router(app_state: AppState) -> Router {
     Router::new()
-        .route("/member", post(wrappers::members::add_member))
+        .route(
+            "/member",
+            post(wrappers::members::add_member)
+            .patch(wrappers::members::update_member)
+        )
         .route("/members", get(wrappers::members::get_all_members))
         .route(
             "/member/{id}",
             get(wrappers::members::get_member)
-            .patch(wrappers::members::update_member)
             .delete(wrappers::members::delete_member),
         )
         .route("/address", post(wrappers::addresses::add_address))
@@ -87,5 +90,5 @@ pub async fn router() -> Router {
             .patch(wrappers::addresses::update_address_by_member_id)
             .delete(wrappers::addresses::delete_address_by_member_id),
         )
-        .with_state(build_state().await)
+        .with_state(app_state)
 }
