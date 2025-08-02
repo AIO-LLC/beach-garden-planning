@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct Member {
+    pub id: String,
     pub first_name: String,
     pub last_name: String,
     pub gender: String,
@@ -25,6 +26,10 @@ pub async fn add_member(
     State(state): State<AppState>,
     Json(payload): Json<Member>,
 ) -> Result<Json<Uuid>, ApiError> {
+    let id: Option<Uuid> = match payload.id {
+        ref s if s.is_empty() => None,
+        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse Uuid ID from string")),
+    };
     let fft_license: Option<String> = match payload.fft_license {
         ref s if s.is_empty() => None,
         _ => Some(payload.fft_license),
@@ -38,7 +43,7 @@ pub async fn add_member(
     let id = members::add_member(
         &client,
         &models::Member {
-            id: None,
+            id,
             first_name: payload.first_name,
             last_name: payload.last_name,
             gender: payload.gender,
@@ -71,9 +76,12 @@ pub async fn get_all_members(State(state): State<AppState>) -> Result<Json<Vec<m
 
 pub async fn update_member(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
     Json(payload): Json<Member>
 ) -> Result<StatusCode, ApiError> {
+    let id: Option<Uuid> = match payload.id {
+        ref s if s.is_empty() => None,
+        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
+    };
     let fft_license: Option<String> = match payload.fft_license {
         ref s if s.is_empty() => None,
         _ => Some(payload.fft_license),
@@ -87,7 +95,7 @@ pub async fn update_member(
     let affected = members::update_member(
         &client, 
         &models::Member {
-            id: Some(id),
+            id,
             first_name: payload.first_name,
             last_name: payload.last_name,
             gender: payload.gender,
@@ -100,7 +108,7 @@ pub async fn update_member(
         }).await?; 
 
     if affected == 1 {
-        Ok(StatusCode::NO_CONTENT)
+        Ok(StatusCode::OK)
     } else {
         Err(ApiError::NotFound)
     }
@@ -113,7 +121,7 @@ pub async fn delete_member(
     let client = state.pool.get().await?;
     let affected = members::delete_member(&client, id).await?;
     if affected == 1 {
-        Ok(StatusCode::NO_CONTENT)
+        Ok(StatusCode::OK)
     } else {
         Err(ApiError::NotFound)
     }
