@@ -100,6 +100,9 @@ async fn member_lifecycle() -> Result<(), Error> {
     let delete_response = server.delete(&format!("/member/{member1_id}")).await;
     delete_response.assert_status_ok();
 
+    let get_response = server.get(&format!("/member/{member1_id}")).await;
+    get_response.assert_status_not_found();
+
     let get_all_response = server.get("/members").await;
     get_all_response.assert_status_ok();
     let members: Vec<Member> = get_all_response.json();
@@ -184,9 +187,13 @@ async fn address_lifecycle() -> Result<(), Error> {
     assert_eq!(address.city, "Bigtown");
     assert_eq!(address.country, "United Kingdom");
 
-    // Test DELETE /address/{id} ------------------------------------------------
-    let delete_response = server.delete(&format!("/address/{member_id}")).await;
+    // Test DELETE /member/{id} ------------------------------------------------
+    // By deleting the corresponding member, it should cascade the address deletion
+    let delete_response = server.delete(&format!("/member/{member_id}")).await;
     delete_response.assert_status_ok();
+
+    let get_response = server.get(&format!("/address/{member_id}")).await;
+    get_response.assert_status_not_found();
 
     Ok(())
 }
