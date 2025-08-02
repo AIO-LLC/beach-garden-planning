@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Member {
     pub id: Option<Uuid>,
     pub first_name: String,
