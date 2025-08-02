@@ -17,5 +17,5 @@ repos:
     rev: v4.6.0
     hooks:
       - id: commitizen
-        name: "Commitizen – Enforce Conventional Commit Message"
+        name: "commitizen"
         stages: [commit-msg]
