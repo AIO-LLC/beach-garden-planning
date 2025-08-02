@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 pub async fn add_address(client: &Client, address: &Address) -> Result<Uuid, Error> {
     let stmt: Statement = client
-        .prepare("INSERT INTO addresses (member_id, line_1, line_2, postal_code, city, country) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
+        .prepare("INSERT INTO address (member_id, line_1, line_2, postal_code, city, country) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id")
         .await?;
 
     let line_2: &Option<String> = match address.line_2 {
@@ -31,7 +31,7 @@ pub async fn add_address(client: &Client, address: &Address) -> Result<Uuid, Err
 
 pub async fn get_address_by_member_id(client: &Client, member_id: Uuid) -> Result<Address, Error> {
     let stmt: Statement = client
-        .prepare("SELECT * FROM addresses WHERE member_id = $1")
+        .prepare("SELECT * FROM address WHERE member_id = $1")
         .await?;
 
     let row: Row = client.query_one(&stmt, &[&member_id]).await?;
@@ -51,7 +51,7 @@ pub async fn update_address_by_member_id(
     client: &Client,
     updated_address: &Address,
 ) -> Result<u64, Error> {
-    let stmt: Statement = client.prepare("UPDATE addresses SET line_1 = $1, line_2 = $2, postal_code = $3, city = $4, country = $5 WHERE member_id = $6").await?;
+    let stmt: Statement = client.prepare("UPDATE address SET line_1 = $1, line_2 = $2, postal_code = $3, city = $4, country = $5 WHERE member_id = $6").await?;
 
     client
         .execute(
@@ -70,7 +70,7 @@ pub async fn update_address_by_member_id(
 
 pub async fn delete_address_by_member_id(client: &Client, member_id: Uuid) -> Result<u64, Error> {
     let stmt: Statement = client
-        .prepare("DELETE FROM addresses WHERE member_id = $1")
+        .prepare("DELETE FROM address WHERE member_id = $1")
         .await?;
     client.execute(&stmt, &[&member_id]).await
 }

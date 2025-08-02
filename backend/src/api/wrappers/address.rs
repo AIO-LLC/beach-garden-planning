@@ -1,6 +1,6 @@
 use crate::api::app::{ApiError, AppState};
 use crate::db::models;
-use crate::db::queries::addresses;
+use crate::db::queries::address;
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
@@ -25,7 +25,7 @@ pub async fn add_address(
 ) -> Result<Json<Uuid>, ApiError> {
     let client: Client = state.pool.get().await?;
 
-    let id: Uuid = addresses::add_address(
+    let id: Uuid = address::add_address(
         &client,
         &models::Address {
             id: None,
@@ -47,7 +47,7 @@ pub async fn get_address_by_member_id(
     Path(member_id): Path<Uuid>,
 ) -> Result<Json<models::Address>, ApiError> {
     let client: Client = state.pool.get().await?;
-    let address: models::Address = addresses::get_address_by_member_id(&client, member_id).await?;
+    let address: models::Address = address::get_address_by_member_id(&client, member_id).await?;
     Ok(Json(address))
 }
 
@@ -62,7 +62,7 @@ pub async fn update_address_by_member_id(
     };
 
     let client = state.pool.get().await?;
-    let affected = addresses::update_address_by_member_id(
+    let affected = address::update_address_by_member_id(
         &client,
         &models::Address {
             id: None, // Not used
@@ -88,7 +88,7 @@ pub async fn delete_address_by_member_id(
     Path(member_id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     let client: Client = state.pool.get().await?;
-    let affected: u64 = addresses::delete_address_by_member_id(&client, member_id).await?;
+    let affected: u64 = address::delete_address_by_member_id(&client, member_id).await?;
     if affected == 1 {
         Ok(StatusCode::NO_CONTENT)
     } else {

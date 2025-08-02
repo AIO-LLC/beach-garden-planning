@@ -1,6 +1,6 @@
 use crate::api::app::{ApiError, AppState};
 use crate::db::models;
-use crate::db::queries::members;
+use crate::db::queries::member;
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
@@ -40,7 +40,7 @@ pub async fn add_member(
     };
 
     let client = state.pool.get().await?;
-    let id = members::add_member(
+    let id = member::add_member(
         &client,
         &models::Member {
             id,
@@ -64,7 +64,7 @@ pub async fn get_member(
     Path(data): Path<Uuid>,
 ) -> Result<Json<models::Member>, ApiError> {
     let client = state.pool.get().await?;
-    let member = members::get_member(&client, data).await?;
+    let member = member::get_member(&client, data).await?;
     Ok(Json(member))
 }
 
@@ -72,7 +72,7 @@ pub async fn get_all_members(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<models::Member>>, ApiError> {
     let client = state.pool.get().await?;
-    let members = members::get_all_members(&client).await?;
+    let members = member::get_all_members(&client).await?;
     Ok(Json(members))
 }
 
@@ -94,7 +94,7 @@ pub async fn update_member(
     };
 
     let client = state.pool.get().await?;
-    let affected = members::update_member(
+    let affected = member::update_member(
         &client,
         &models::Member {
             id,
@@ -123,7 +123,7 @@ pub async fn delete_member(
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, ApiError> {
     let client = state.pool.get().await?;
-    let affected = members::delete_member(&client, id).await?;
+    let affected = member::delete_member(&client, id).await?;
     if affected == 1 {
         Ok(StatusCode::OK)
     } else {

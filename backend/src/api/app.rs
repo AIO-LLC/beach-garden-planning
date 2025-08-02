@@ -74,19 +74,19 @@ pub async fn router(app_state: AppState) -> Router {
     Router::new()
         .route(
             "/member",
-            post(wrappers::members::add_member).patch(wrappers::members::update_member),
+            post(wrappers::member::add_member).patch(wrappers::member::update_member),
         )
-        .route("/members", get(wrappers::members::get_all_members))
+        .route("/members", get(wrappers::member::get_all_members))
         .route(
             "/member/{id}",
-            get(wrappers::members::get_member).delete(wrappers::members::delete_member),
+            get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
-        .route("/address", post(wrappers::addresses::add_address))
+        .route("/address", post(wrappers::address::add_address))
         .route(
             "/address/{member_id}",
-            get(wrappers::addresses::get_address_by_member_id)
-                .patch(wrappers::addresses::update_address_by_member_id)
-                .delete(wrappers::addresses::delete_address_by_member_id),
+            get(wrappers::address::get_address_by_member_id)
+                .patch(wrappers::address::update_address_by_member_id)
+                .delete(wrappers::address::delete_address_by_member_id),
         )
         .with_state(app_state)
 }
