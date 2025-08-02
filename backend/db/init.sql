@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE TABLE members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   first_name VARCHAR(63) NOT NULL,
@@ -13,7 +15,7 @@ CREATE TABLE members (
 
 CREATE TABLE addresses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  member_id UUID UNIQUE NOT NULL REFERENCES members(id) ON DELETE CASCADE,
   line_1 VARCHAR(127) NOT NULL,
   line_2 VARCHAR(127),
   postal_code VARCHAR(6) NOT NULL,
