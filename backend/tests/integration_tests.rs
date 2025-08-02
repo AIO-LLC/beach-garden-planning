@@ -103,6 +103,7 @@ async fn member_lifecycle() -> Result<(), Error> {
     let get_all_response = server.get("/members").await;
     get_all_response.assert_status_ok();
     let members: Vec<Member> = get_all_response.json();
+    assert_eq!(members.len(), 1);
     assert_eq!(members[0].id, Some(Uuid::parse_str(&member2_id).unwrap()));
 
     Ok(())
