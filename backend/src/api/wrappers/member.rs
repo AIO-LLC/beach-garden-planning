@@ -64,8 +64,10 @@ pub async fn get_member(
     Path(data): Path<Uuid>,
 ) -> Result<Json<models::Member>, ApiError> {
     let client = state.pool.get().await?;
-    let member = member::get_member(&client, data).await?;
-    Ok(Json(member))
+    match member::get_member(&client, data).await {
+        Ok(member) => Ok(Json(member)),
+        Err(_) => Err(ApiError::NotFound),
+    }
 }
 
 pub async fn get_all_members(

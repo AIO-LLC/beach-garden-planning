@@ -47,8 +47,10 @@ pub async fn get_address_by_member_id(
     Path(member_id): Path<Uuid>,
 ) -> Result<Json<models::Address>, ApiError> {
     let client: Client = state.pool.get().await?;
-    let address: models::Address = address::get_address_by_member_id(&client, member_id).await?;
-    Ok(Json(address))
+    match address::get_address_by_member_id(&client, member_id).await {
+        Ok(address) => Ok(Json(address)),
+        Err(_) => Err(ApiError::NotFound),
+    }
 }
 
 pub async fn update_address_by_member_id(
