@@ -52,18 +52,47 @@ pub async fn build_state() -> AppState {
 pub enum ApiError {
     #[error("database error")]
     Db(#[from] tokio_postgres::Error),
+
     #[error("pool error")]
     Pool(#[from] deadpool_postgres::PoolError),
+
     #[error("not found")]
     NotFound,
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let (status, msg) = match &self {
-            ApiError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
-            ApiError::Db(_) | ApiError::Pool(_) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "internal error".into())
+        let (status, msg) = match self {
+            ApiError::NotFound => (StatusCode::NOT_FOUND, "Resource not found".to_string()),
+            ApiError::Db(db_err) => {
+                tracing::error!("Database error: {}", db_err);
+                match db_err.as_db_error() {
+                    Some(db_error) => {
+                        // Handle specific PostgreSQL errors
+                        match db_error.code().code() {
+                            "23505" => (StatusCode::CONFLICT, "Duplicate entry".to_string()),
+                            "23503" => (
+                                StatusCode::BAD_REQUEST,
+                                "Foreign key constraint violation".to_string(),
+                            ),
+                            _ => (
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                                format!("Database error: {db_err}"),
+                            ),
+                        }
+                    }
+                    None => (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        format!("Database error: {db_err}"),
+                    ),
+                }
+            }
+            ApiError::Pool(pool_err) => {
+                tracing::error!("Connection pool error: {}", pool_err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Connection pool error: {pool_err}"),
+                )
             }
         };
         (status, Json(serde_json::json!({ "error": msg }))).into_response()
