@@ -171,6 +171,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-postgres",
+ "tracing",
  "uuid",
 ]
 
