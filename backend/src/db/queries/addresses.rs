@@ -47,7 +47,10 @@ pub async fn get_address_by_member_id(client: &Client, member_id: Uuid) -> Resul
     })
 }
 
-pub async fn update_address_by_member_id(client: &Client, updated_address: &Address) -> Result<u64, Error> {
+pub async fn update_address_by_member_id(
+    client: &Client,
+    updated_address: &Address,
+) -> Result<u64, Error> {
     let stmt: Statement = client.prepare("UPDATE addresses SET line_1 = $1, line_2 = $2, postal_code = $3, city = $4, country = $5 WHERE member_id = $6").await?;
 
     client
@@ -59,7 +62,7 @@ pub async fn update_address_by_member_id(client: &Client, updated_address: &Addr
                 &updated_address.postal_code,
                 &updated_address.city,
                 &updated_address.country,
-                &updated_address.member_id
+                &updated_address.member_id,
             ],
         )
         .await

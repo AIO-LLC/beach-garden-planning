@@ -54,7 +54,7 @@ pub async fn get_address_by_member_id(
 pub async fn update_address_by_member_id(
     State(state): State<AppState>,
     Path(member_id): Path<Uuid>,
-    Json(payload): Json<Address>
+    Json(payload): Json<Address>,
 ) -> Result<StatusCode, ApiError> {
     let line_2: Option<String> = match payload.line_2 {
         ref s if s.is_empty() => None,
@@ -63,7 +63,7 @@ pub async fn update_address_by_member_id(
 
     let client = state.pool.get().await?;
     let affected = addresses::update_address_by_member_id(
-        &client, 
+        &client,
         &models::Address {
             id: None, // Not used
             member_id,
@@ -71,8 +71,10 @@ pub async fn update_address_by_member_id(
             line_2,
             postal_code: payload.postal_code,
             city: payload.city,
-            country: payload.country
-        }).await?; 
+            country: payload.country,
+        },
+    )
+    .await?;
 
     if affected == 1 {
         Ok(StatusCode::NO_CONTENT)

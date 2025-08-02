@@ -2,8 +2,8 @@ mod common;
 use anyhow::Error;
 use axum_test::TestServer;
 use backend::db::models::Member;
-use serde_json::json;
 use common::create_test_server;
+use serde_json::json;
 use testcontainers::ContainerAsync;
 use testcontainers_modules::postgres::Postgres;
 use uuid::Uuid;
@@ -25,9 +25,7 @@ async fn member_lifecycle() -> Result<(), Error> {
         "profile_picture": ""
     });
 
-    let post_response = server.post("/member")
-        .json(&new_member)
-        .await;
+    let post_response = server.post("/member").json(&new_member).await;
 
     post_response.assert_status_ok();
     let member1_id: String = post_response.json();
@@ -61,16 +59,12 @@ async fn member_lifecycle() -> Result<(), Error> {
         "profile_picture": "pp.png"
     });
 
-    let patch_response = server.patch("/member")
-        .json(&updated_member)
-        .await;
+    let patch_response = server.patch("/member").json(&updated_member).await;
     patch_response.assert_status_ok();
 
     // Test GET /members -------------------------------------------------------
     // Add a second member to test the get all members route
-    let post_response = server.post("/member")
-        .json(&new_member)
-        .await;
+    let post_response = server.post("/member").json(&new_member).await;
 
     post_response.assert_status_ok();
     let member2_id: String = post_response.json();
@@ -110,7 +104,6 @@ async fn member_lifecycle() -> Result<(), Error> {
     get_all_response.assert_status_ok();
     let members: Vec<Member> = get_all_response.json();
     assert_eq!(members[0].id, Some(Uuid::parse_str(&member2_id).unwrap()));
-    
+
     Ok(())
 }
-

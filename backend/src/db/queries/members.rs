@@ -83,7 +83,7 @@ pub async fn update_member(client: &Client, updated_member: &Member) -> Result<u
                 &updated_member.phone,
                 &updated_member.fft_license,
                 &updated_member.profile_picture,
-                &updated_member.id
+                &updated_member.id,
             ],
         )
         .await

@@ -68,7 +68,9 @@ pub async fn get_member(
     Ok(Json(member))
 }
 
-pub async fn get_all_members(State(state): State<AppState>) -> Result<Json<Vec<models::Member>>, ApiError> {
+pub async fn get_all_members(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<models::Member>>, ApiError> {
     let client = state.pool.get().await?;
     let members = members::get_all_members(&client).await?;
     Ok(Json(members))
@@ -76,7 +78,7 @@ pub async fn get_all_members(State(state): State<AppState>) -> Result<Json<Vec<m
 
 pub async fn update_member(
     State(state): State<AppState>,
-    Json(payload): Json<Member>
+    Json(payload): Json<Member>,
 ) -> Result<StatusCode, ApiError> {
     let id: Option<Uuid> = match payload.id {
         ref s if s.is_empty() => None,
@@ -93,7 +95,7 @@ pub async fn update_member(
 
     let client = state.pool.get().await?;
     let affected = members::update_member(
-        &client, 
+        &client,
         &models::Member {
             id,
             first_name: payload.first_name,
@@ -105,7 +107,9 @@ pub async fn update_member(
             fft_license,
             profile_picture,
             signup_date: None, // Not used
-        }).await?; 
+        },
+    )
+    .await?;
 
     if affected == 1 {
         Ok(StatusCode::OK)

@@ -1,5 +1,5 @@
-use backend::api::app::{build_state, router, AppState};
 use axum::{Error, Router};
+use backend::api::app::{AppState, build_state, router};
 use dotenvy::dotenv;
 use std::env;
 use std::net::SocketAddr;
