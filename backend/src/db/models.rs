@@ -16,7 +16,7 @@ pub struct Member {
     pub signup_date: Option<NaiveDate>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Address {
     pub id: Option<Uuid>,
     pub member_id: Uuid,

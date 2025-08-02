@@ -81,11 +81,14 @@ pub async fn router(app_state: AppState) -> Router {
             "/member/{id}",
             get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
-        .route("/address", post(wrappers::address::add_address))
+        .route(
+            "/address",
+            post(wrappers::address::add_address)
+                .patch(wrappers::address::update_address_by_member_id),
+        )
         .route(
             "/address/{member_id}",
             get(wrappers::address::get_address_by_member_id)
-                .patch(wrappers::address::update_address_by_member_id)
                 .delete(wrappers::address::delete_address_by_member_id),
         )
         .with_state(app_state)
