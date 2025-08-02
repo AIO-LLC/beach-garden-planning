@@ -1,0 +1,23 @@
+name: Backend
+
+on: push
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: cargo build
+
+    - name: Run tests
+      run: cargo test
