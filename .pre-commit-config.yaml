@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: cargo-check
+        name: "cargo check"
+        entry: bash -c "cd backend && cargo check"
+        language: system
+        pass_filenames: false
+
+      - id: cargo-fmt
+        name: "cargo fmt"
+        entry: bash -c "cd backend && cargo fmt"
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.6.0
+    hooks:
+      - id: commitizen
+        name: "Commitizen – Enforce Conventional Commit Message"
+        stages: [commit-msg]
