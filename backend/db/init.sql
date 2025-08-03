@@ -22,3 +22,17 @@ CREATE TABLE address (
   city VARCHAR(63) NOT NULL,
   country VARCHAR(31) NOT NULL
 );
+
+CREATE TABLE reservation (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  court_number SMALLINT NOT NULL CHECK (court_number BETWEEN 1 AND 4),
+  reservation_date DATE NOT NULL,
+  reservation_time SMALLINT NOT NULL CHECK (reservation_time BETWEEN 0 AND 23), -- 24h format
+  duration SMALLINT NOT NULL DEFAULT 1 -- In hours
+);
+
+CREATE TABLE reservation_to_member (
+  reservation_id UUID NOT NULL REFERENCES reservation(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES member(id) ON DELETE CASCADE,
+  PRIMARY KEY (reservation_id, member_id)
+);
