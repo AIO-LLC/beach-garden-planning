@@ -9,7 +9,7 @@ pub async fn add_reservation(
     member_id: &Uuid,
 ) -> Result<Uuid, Error> {
     let stmt: Statement = client
-        .prepare("INSERT INTO reservation (court_number, reservation_date, reservation_time) VALUES ($1, $2, $3) RETURNING id")
+        .prepare("INSERT INTO reservation (court_number, reservation_date, reservation_time, duration) VALUES ($1, $2, $3, $4) RETURNING id")
         .await?;
 
     let row: Row = client
@@ -43,7 +43,7 @@ pub async fn get_reservation(client: &Client, id: Uuid) -> Result<Reservation, E
 
     Ok(Reservation {
         id: row.try_get("id")?,
-        court_number: row.try_get("courtn_number")?,
+        court_number: row.try_get("court_number")?,
         reservation_date: row.try_get("reservation_date")?,
         reservation_time: row.try_get("reservation_time")?,
         duration: row.try_get("duration")?,
@@ -64,7 +64,7 @@ pub async fn get_reservations_by_date(
         .map(|row| -> Result<Reservation, Error> {
             Ok(Reservation {
                 id: row.try_get("id")?,
-                court_number: row.try_get("courtn_number")?,
+                court_number: row.try_get("court_number")?,
                 reservation_date: row.try_get("reservation_date")?,
                 reservation_time: row.try_get("reservation_time")?,
                 duration: row.try_get("duration")?,
