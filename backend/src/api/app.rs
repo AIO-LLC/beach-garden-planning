@@ -109,6 +109,10 @@ pub async fn router(app_state: AppState) -> Router {
         )
         .route("/members", get(wrappers::member::get_all_members))
         .route(
+            "/members/reservation/{reservation_id}",
+            get(wrappers::reservation_to_member::get_members_from_reservation),
+        )
+        .route(
             "/member/{id}",
             get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
@@ -131,6 +135,10 @@ pub async fn router(app_state: AppState) -> Router {
         .route(
             "/reservations/{date}",
             get(wrappers::reservation::get_reservations_by_date),
+        )
+        .route(
+            "/reservations/member/{member_id}",
+            get(wrappers::reservation_to_member::get_reservations_from_member),
         )
         .route(
             "/reservation/{reservation_or_member_id}",
