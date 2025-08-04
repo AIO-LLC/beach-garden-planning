@@ -1,4 +1,5 @@
 use crate::db::models::Reservation;
+use chrono::NaiveDate;
 use tokio_postgres::{Client, Error, Row, Statement};
 use uuid::Uuid;
 
@@ -38,8 +39,15 @@ pub async fn get_reservation(client: &Client, id: Uuid) -> Result<Reservation, E
     })
 }
 
-pub async fn get_all_reservations(client: &Client) -> Result<Vec<Reservation>, Error> {
-    let rows: Vec<Row> = client.query("SELECT * FROM reservation", &[]).await?;
+pub async fn get_reservations_from_date(
+    client: &Client,
+    date: &NaiveDate,
+) -> Result<Vec<Reservation>, Error> {
+    let stmt: Statement = client
+        .prepare("SELECT * FROM reservation WHERE reservation_date = $1")
+        .await?;
+
+    let rows: Vec<Row> = client.query(&stmt, &[date]).await?;
 
     rows.into_iter()
         .map(|row| -> Result<Reservation, Error> {

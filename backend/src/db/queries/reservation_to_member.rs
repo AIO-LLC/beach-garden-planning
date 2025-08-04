@@ -42,14 +42,3 @@ pub async fn get_reservations_from_member(
         .map(|row| -> Result<Uuid, Error> { row.try_get("reservation_id") })
         .collect()
 }
-
-pub async fn delete_reservation_to_member(
-    client: &Client,
-    reservation_id: &Uuid,
-    member_id: &Uuid,
-) -> Result<u64, Error> {
-    let stmt: Statement = client
-        .prepare("DELETE FROM reservation_to_member WHERE reservation_id = $1 AND member_id = $2")
-        .await?;
-    client.execute(&stmt, &[reservation_id, member_id]).await
-}

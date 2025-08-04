@@ -48,21 +48,3 @@ pub async fn get_reservations_from_member(
         Err(_) => Err(ApiError::NotFound),
     }
 }
-
-pub async fn delete_reservation_to_member(
-    State(state): State<AppState>,
-    Json(payload): Json<ReservationToMember>,
-) -> Result<StatusCode, ApiError> {
-    let client = state.pool.get().await?;
-    let affected = reservation_to_member::delete_reservation_to_member(
-        &client,
-        &Uuid::parse_str(&payload.reservation_id).expect("Could not parse UUID from string."),
-        &Uuid::parse_str(&payload.member_id).expect("Could not parse UUID from string."),
-    )
-    .await?;
-    if affected == 1 {
-        Ok(StatusCode::OK)
-    } else {
-        Err(ApiError::NotFound)
-    }
-}
