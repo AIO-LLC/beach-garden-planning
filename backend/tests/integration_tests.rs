@@ -222,7 +222,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
         "court_number": 1,
         "reservation_date": date,
         "reservation_time": 15,
-        "duration": ""
     });
     let post_response = server
         .post(&format!("/reservation/{member_id}"))
@@ -230,6 +229,13 @@ async fn reservation_lifecycle() -> Result<(), Error> {
         .await;
     post_response.assert_status_ok();
     let reservation1_id: String = post_response.json();
+
+    // Check if the constraint `unique_court_date_time` prevent duplicates
+    let post_response = server
+        .post(&format!("/reservation/{member_id}"))
+        .json(&new_reservation)
+        .await;
+    post_response.assert_status_conflict();
 
     // Test GET /reservation/{reservation_id} ----------------------------------
     let get_response = server.get(&format!("/reservation/{reservation1_id}")).await;
@@ -243,7 +249,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
     assert_eq!(reservation1.court_number, 1);
     assert_eq!(reservation1.reservation_date.to_string(), date);
     assert_eq!(reservation1.reservation_time, 15);
-    assert_eq!(reservation1.duration, 1);
 
     // Check if relationship between the member and their reservation has been added to the
     // junction table
@@ -270,7 +275,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
         "court_number": 2,
         "reservation_date": date,
         "reservation_time": 16,
-        "duration": "2"
     });
     let post_response = server
         .post(&format!("/reservation/{member_id}"))
@@ -318,7 +322,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
     assert_eq!(reservations[0].court_number, 1);
     assert_eq!(reservations[0].reservation_date.to_string(), date);
     assert_eq!(reservations[0].reservation_time, 15);
-    assert_eq!(reservations[0].duration, 1);
     assert_eq!(
         reservations[1].id,
         Some(Uuid::parse_str(&reservation2_id).expect("Could not parse UUID from string."))
@@ -326,7 +329,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
     assert_eq!(reservations[1].court_number, 2);
     assert_eq!(reservations[1].reservation_date.to_string(), date);
     assert_eq!(reservations[1].reservation_time, 16);
-    assert_eq!(reservations[1].duration, 2);
 
     // Test PATCH /reservation -------------------------------------------------
     let updated_date: &str = "2026-08-15";
@@ -335,7 +337,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
         "court_number": 3,
         "reservation_date": updated_date,
         "reservation_time": 9,
-        "duration": "3"
     });
 
     let patch_response = server
@@ -356,7 +357,6 @@ async fn reservation_lifecycle() -> Result<(), Error> {
     assert_eq!(reservation1.court_number, 3);
     assert_eq!(reservation1.reservation_date.to_string(), updated_date);
     assert_eq!(reservation1.reservation_time, 9);
-    assert_eq!(reservation1.duration, 3);
 
     // Test DELETE /reservation/{id} ------------------------------------------------
     let delete_response = server

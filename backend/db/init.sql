@@ -28,7 +28,7 @@ CREATE TABLE reservation (
   court_number SMALLINT NOT NULL CHECK (court_number BETWEEN 1 AND 4),
   reservation_date DATE NOT NULL,
   reservation_time SMALLINT NOT NULL CHECK (reservation_time BETWEEN 0 AND 23), -- 24h format
-  duration SMALLINT NOT NULL DEFAULT 1 -- In hours
+  CONSTRAINT unique_court_date_time UNIQUE (court_number, reservation_date, reservation_time)
 );
 
 CREATE TABLE reservation_to_member (

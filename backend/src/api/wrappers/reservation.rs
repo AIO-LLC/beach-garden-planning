@@ -15,7 +15,6 @@ pub struct Reservation {
     pub court_number: i16,
     pub reservation_date: NaiveDate,
     pub reservation_time: i16,
-    pub duration: String,
 }
 
 pub async fn add_reservation(
@@ -27,13 +26,6 @@ pub async fn add_reservation(
         ref s if s.is_empty() => None,
         _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
     };
-    let duration: i16 = match payload.duration {
-        ref s if s.is_empty() => 1,
-        _ => payload
-            .duration
-            .parse()
-            .expect("Could not convert string to i16"),
-    };
 
     let client = state.pool.get().await?;
     let id = reservation::add_reservation(
@@ -43,7 +35,6 @@ pub async fn add_reservation(
             court_number: payload.court_number,
             reservation_date: payload.reservation_date,
             reservation_time: payload.reservation_time,
-            duration,
         },
         &member_id,
     )
@@ -79,13 +70,6 @@ pub async fn update_reservation(
         ref s if s.is_empty() => None,
         _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
     };
-    let duration: i16 = match payload.duration {
-        ref s if s.is_empty() => 1,
-        _ => payload
-            .duration
-            .parse()
-            .expect("Could not convert string to i16"),
-    };
 
     let client = state.pool.get().await?;
     let affected = reservation::update_reservation(
@@ -95,7 +79,6 @@ pub async fn update_reservation(
             court_number: payload.court_number,
             reservation_date: payload.reservation_date,
             reservation_time: payload.reservation_time,
-            duration,
         },
     )
     .await?;

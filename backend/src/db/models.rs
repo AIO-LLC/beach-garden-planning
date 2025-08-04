@@ -33,5 +33,4 @@ pub struct Reservation {
     pub court_number: i16,
     pub reservation_date: NaiveDate,
     pub reservation_time: i16,
-    pub duration: i16,
 }

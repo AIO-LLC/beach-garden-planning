@@ -9,7 +9,7 @@ pub async fn add_reservation(
     member_id: &Uuid,
 ) -> Result<Uuid, Error> {
     let stmt: Statement = client
-        .prepare("INSERT INTO reservation (court_number, reservation_date, reservation_time, duration) VALUES ($1, $2, $3, $4) RETURNING id")
+        .prepare("INSERT INTO reservation (court_number, reservation_date, reservation_time) VALUES ($1, $2, $3) RETURNING id")
         .await?;
 
     let row: Row = client
@@ -19,7 +19,6 @@ pub async fn add_reservation(
                 &reservation.court_number,
                 &reservation.reservation_date,
                 &reservation.reservation_time,
-                &reservation.duration,
             ],
         )
         .await?;
@@ -46,7 +45,6 @@ pub async fn get_reservation(client: &Client, id: Uuid) -> Result<Reservation, E
         court_number: row.try_get("court_number")?,
         reservation_date: row.try_get("reservation_date")?,
         reservation_time: row.try_get("reservation_time")?,
-        duration: row.try_get("duration")?,
     })
 }
 
@@ -67,7 +65,6 @@ pub async fn get_reservations_by_date(
                 court_number: row.try_get("court_number")?,
                 reservation_date: row.try_get("reservation_date")?,
                 reservation_time: row.try_get("reservation_time")?,
-                duration: row.try_get("duration")?,
             })
         })
         .collect()
@@ -77,7 +74,7 @@ pub async fn update_reservation(
     client: &Client,
     updated_reservation: &Reservation,
 ) -> Result<u64, Error> {
-    let stmt: Statement = client.prepare("UPDATE reservation SET court_number = $1, reservation_date = $2, reservation_time = $3, duration = $4 WHERE id = $5").await?;
+    let stmt: Statement = client.prepare("UPDATE reservation SET court_number = $1, reservation_date = $2, reservation_time = $3 WHERE id = $4").await?;
 
     client
         .execute(
@@ -86,7 +83,6 @@ pub async fn update_reservation(
                 &updated_reservation.court_number,
                 &updated_reservation.reservation_date,
                 &updated_reservation.reservation_time,
-                &updated_reservation.duration,
                 &updated_reservation.id,
             ],
         )
