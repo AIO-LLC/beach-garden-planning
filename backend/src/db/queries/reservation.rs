@@ -3,7 +3,11 @@ use chrono::NaiveDate;
 use tokio_postgres::{Client, Error, Row, Statement};
 use uuid::Uuid;
 
-pub async fn add_reservation(client: &Client, reservation: &Reservation) -> Result<Uuid, Error> {
+pub async fn add_reservation(
+    client: &Client,
+    reservation: &Reservation,
+    member_id: &Uuid,
+) -> Result<Uuid, Error> {
     let stmt: Statement = client
         .prepare("INSERT INTO reservation (court_number, reservation_date, reservation_time) VALUES ($1, $2, $3) RETURNING id")
         .await?;
@@ -20,7 +24,14 @@ pub async fn add_reservation(client: &Client, reservation: &Reservation) -> Resu
         )
         .await?;
 
-    row.try_get("id")
+    let reservation_id: Uuid = row.try_get("id")?;
+
+    let stmt: Statement = client
+        .prepare("INSERT INTO reservation_to_member (reservation_id, member_id) VALUES ($1, $2)")
+        .await?;
+    client.execute(&stmt, &[&reservation_id, member_id]).await?;
+
+    Ok(reservation_id)
 }
 
 pub async fn get_reservation(client: &Client, id: Uuid) -> Result<Reservation, Error> {
@@ -39,7 +50,7 @@ pub async fn get_reservation(client: &Client, id: Uuid) -> Result<Reservation, E
     })
 }
 
-pub async fn get_reservations_from_date(
+pub async fn get_reservations_by_date(
     client: &Client,
     date: &NaiveDate,
 ) -> Result<Vec<Reservation>, Error> {

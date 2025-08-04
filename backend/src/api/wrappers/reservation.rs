@@ -20,11 +20,12 @@ pub struct Reservation {
 
 pub async fn add_reservation(
     State(state): State<AppState>,
+    Path(member_id): Path<Uuid>,
     Json(payload): Json<Reservation>,
 ) -> Result<Json<Uuid>, ApiError> {
     let id: Option<Uuid> = match payload.id {
         ref s if s.is_empty() => None,
-        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse Uuid ID from string")),
+        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
     };
     let duration: i16 = match payload.duration {
         ref s if s.is_empty() => 1,
@@ -44,6 +45,7 @@ pub async fn add_reservation(
             reservation_time: payload.reservation_time,
             duration,
         },
+        &member_id,
     )
     .await?;
     Ok(Json(id))
@@ -51,21 +53,21 @@ pub async fn add_reservation(
 
 pub async fn get_reservation(
     State(state): State<AppState>,
-    Path(data): Path<Uuid>,
+    Path(reservation_id): Path<Uuid>,
 ) -> Result<Json<models::Reservation>, ApiError> {
     let client = state.pool.get().await?;
-    match reservation::get_reservation(&client, data).await {
+    match reservation::get_reservation(&client, reservation_id).await {
         Ok(reservation) => Ok(Json(reservation)),
         Err(_) => Err(ApiError::NotFound),
     }
 }
 
-pub async fn get_reservations_from_day(
+pub async fn get_reservations_by_date(
     State(state): State<AppState>,
     Path(date): Path<NaiveDate>,
 ) -> Result<Json<Vec<models::Reservation>>, ApiError> {
     let client = state.pool.get().await?;
-    let reservations = reservation::get_reservations_from_date(&client, &date).await?;
+    let reservations = reservation::get_reservations_by_date(&client, &date).await?;
     Ok(Json(reservations))
 }
 
