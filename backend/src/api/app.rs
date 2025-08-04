@@ -3,6 +3,7 @@ use axum::{
     Json,
     http::StatusCode,
     response::{IntoResponse, Response},
+    routing::patch,
 };
 use axum::{
     Router,
@@ -101,6 +102,7 @@ impl IntoResponse for ApiError {
 
 pub async fn router(app_state: AppState) -> Router {
     Router::new()
+        // Member routes -------------------------------------------------------
         .route(
             "/member",
             post(wrappers::member::add_member).patch(wrappers::member::update_member),
@@ -110,6 +112,7 @@ pub async fn router(app_state: AppState) -> Router {
             "/member/{id}",
             get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
+        // Address routes ------------------------------------------------------
         .route(
             "/address",
             post(wrappers::address::add_address)
@@ -119,6 +122,21 @@ pub async fn router(app_state: AppState) -> Router {
             "/address/{member_id}",
             get(wrappers::address::get_address_by_member_id)
                 .delete(wrappers::address::delete_address_by_member_id),
+        )
+        // Reservation routes --------------------------------------------------
+        .route(
+            "/reservation",
+            patch(wrappers::reservation::update_reservation),
+        )
+        .route(
+            "/reservations/{date}",
+            get(wrappers::reservation::get_reservations_by_date),
+        )
+        .route(
+            "/reservation/{reservation_or_member_id}",
+            get(wrappers::reservation::get_reservation)
+                .post(wrappers::reservation::add_reservation)
+                .delete(wrappers::reservation::delete_reservation),
         )
         .with_state(app_state)
 }
