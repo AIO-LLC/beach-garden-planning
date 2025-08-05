@@ -1,6 +1,6 @@
 # IDEs
-.vscode
-.idea
+**/.vscode
+**/.idea
 
 # Frontend gitignore
 
