@@ -1,9 +1,9 @@
 import { title } from "@/components/primitives";
 
-export default function DocsPage() {
+export default function LogInPage() {
   return (
     <div>
-      <h1 className={title()}>Docs</h1>
+      <h1 className={title()}>Se connecter</h1>
     </div>
   );
 }
