@@ -1,4 +1,4 @@
-export type SiteConfig = typeof siteConfig;
+export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
   name: "Beach Garden",
@@ -6,40 +6,40 @@ export const siteConfig = {
   navItems: [
     {
       label: "Accueil",
-      href: "/",
+      href: "/"
     },
     {
       label: "Devenir adhérent",
-      href: "/signup",
+      href: "/signup"
     },
     {
       label: "Se connecter",
-      href: "/login",
+      href: "/login"
     },
     {
       label: "Planning",
-      href: "/planning",
-    },
+      href: "/planning"
+    }
   ],
   navMenuItems: [
     {
       label: "Accueil",
-      href: "/",
+      href: "/"
     },
     {
       label: "Devenir adhérent",
-      href: "/signup",
+      href: "/signup"
     },
     {
       label: "Se connecter",
-      href: "/login",
+      href: "/login"
     },
     {
       label: "Planning",
-      href: "/planning",
-    },
+      href: "/planning"
+    }
   ],
   links: {
-    instagram: "https://instagram.com/beachgardensxm",
-  },
-};
+    instagram: "https://instagram.com/beachgardensxm"
+  }
+}
