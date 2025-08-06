@@ -36,3 +36,9 @@ CREATE TABLE reservation_to_member (
   member_id UUID NOT NULL REFERENCES member(id) ON DELETE CASCADE,
   PRIMARY KEY (reservation_id, member_id)
 );
+
+CREATE TABLE auth_data (
+  email VARCHAR(255) PRIMARY KEY,
+  code_hash NOT NULL,
+  expires_at TIMESTAMPZ NOT NULL
+)
