@@ -12,8 +12,10 @@ import {
 } from "@heroui/react"
 import { getLocalTimeZone, today } from "@internationalized/date"
 
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+
 export default function SignUpPage() {
-  const [phone, setPhone] = React.useState("")
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [profilePicture, setProfilePicture] = React.useState("")
   const [fftLicense, setFftLicense] = React.useState("")
@@ -57,32 +59,34 @@ export default function SignUpPage() {
     setProfilePicture(file ? file.name : "")
   }
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const data = Object.fromEntries(new FormData(e.currentTarget))
-    const submissionData = {
+
+    var data = Object.fromEntries(new FormData(e.currentTarget))
+
+    var { terms, ...data } = data
+    const payload = {
+      id: "",
       ...data,
-      profile_picture: selectedFile
+      profile_picture: profilePicture
     }
 
-    // Custom validation checks
-    const newErrors: Record<string, string> = {}
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-
-      return
-    }
-    if (data.terms !== "true") {
-      setErrors({
-        terms:
-          "Veuillez accepter les termes et conditions afin d’adhérer au club."
+    try {
+      const url = `${API_HOST}:${API_PORT}/member`
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
 
-      return
+      if (!response.ok) throw new Error(`Erreur ${response.status}`)
+      const result = await response.json()
+
+      setSubmitted(result)
+      setErrors({})
+    } catch (err: any) {
+      setErrors({ submit: err.message })
     }
-    setErrors({})
-    setSubmitted(submissionData)
   }
 
   return (
@@ -108,8 +112,8 @@ export default function SignUpPage() {
         name="gender"
         placeholder="Sélectionnez votre sexe"
       >
-        <SelectItem value="M">Homme</SelectItem>
-        <SelectItem value="F">Femme</SelectItem>
+        <SelectItem key="M">Homme</SelectItem>
+        <SelectItem key="F">Femme</SelectItem>
       </Select>
       <DatePicker
         required
@@ -127,6 +131,14 @@ export default function SignUpPage() {
         type="email"
       />
       <Input
+        required
+        label="Numéro de téléphone"
+        labelPlacement="outside"
+        name="phone"
+        placeholder="Entrez votre numéro de téléphone"
+        type="text"
+      />
+      <Input
         label="Numéro de licence FFT"
         labelPlacement="outside"
         name="fft_license"
@@ -137,7 +149,6 @@ export default function SignUpPage() {
         onChange={e => setFftLicense(e.target.value)}
       />
 
-      {/* File input with associated label for accessibility */}
       <div className="flex flex-col gap-1">
         <label className="text-sm font-medium" htmlFor="profile-picture-upload">
           Photo de profil
