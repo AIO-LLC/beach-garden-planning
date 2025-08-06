@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -33,4 +33,11 @@ pub struct Reservation {
     pub court_number: i16,
     pub reservation_date: NaiveDate,
     pub reservation_time: i16,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct AuthData {
+    pub email: String,
+    pub code_hash: String,
+    pub expires_at: NaiveDateTime,
 }
