@@ -1,7 +1,7 @@
 use crate::api::wrappers;
 use axum::{
     Json,
-    http::StatusCode,
+    http::{HeaderValue, Method, StatusCode},
     response::{IntoResponse, Response},
     routing::patch,
 };
@@ -15,6 +15,7 @@ use dotenvy::dotenv;
 use std::env;
 use thiserror::Error;
 use tokio_postgres::NoTls;
+use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -101,6 +102,18 @@ impl IntoResponse for ApiError {
 }
 
 pub async fn router(app_state: AppState) -> Router {
+    let cors = CorsLayer::new()
+        .allow_origin(
+            HeaderValue::from_str("http://localhost:3000").expect("Invalid origin header"),
+        )
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::PATCH,
+            Method::DELETE,
+        ])
+        .allow_headers(Any);
+
     Router::new()
         // Member routes -------------------------------------------------------
         .route(
@@ -147,4 +160,5 @@ pub async fn router(app_state: AppState) -> Router {
                 .delete(wrappers::reservation::delete_reservation),
         )
         .with_state(app_state)
+        .layer(cors)
 }
