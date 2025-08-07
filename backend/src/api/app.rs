@@ -115,48 +115,29 @@ pub async fn router(app_state: AppState) -> Router {
         .allow_headers(Any);
 
     Router::new()
-        // Member routes -------------------------------------------------------
+        // Member routes
         .route(
             "/member",
             post(wrappers::member::add_member).patch(wrappers::member::update_member),
         )
         .route("/members", get(wrappers::member::get_all_members))
         .route(
-            "/members/reservation/{reservation_id}",
-            get(wrappers::reservation_to_member::get_members_from_reservation),
-        )
-        .route(
             "/member/{id}",
             get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
-        // Address routes ------------------------------------------------------
-        .route(
-            "/address",
-            post(wrappers::address::add_address)
-                .patch(wrappers::address::update_address_by_member_id),
-        )
-        .route(
-            "/address/{member_id}",
-            get(wrappers::address::get_address_by_member_id)
-                .delete(wrappers::address::delete_address_by_member_id),
-        )
-        // Reservation routes --------------------------------------------------
+        // Reservation routes
         .route(
             "/reservation",
-            patch(wrappers::reservation::update_reservation),
+            patch(wrappers::reservation::update_reservation)
+                .post(wrappers::reservation::add_reservation),
         )
         .route(
             "/reservations/{date}",
             get(wrappers::reservation::get_reservations_by_date),
         )
         .route(
-            "/reservations/member/{member_id}",
-            get(wrappers::reservation_to_member::get_reservations_from_member),
-        )
-        .route(
-            "/reservation/{reservation_or_member_id}",
+            "/reservation/{id}",
             get(wrappers::reservation::get_reservation)
-                .post(wrappers::reservation::add_reservation)
                 .delete(wrappers::reservation::delete_reservation),
         )
         .with_state(app_state)

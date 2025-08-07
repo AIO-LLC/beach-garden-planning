@@ -1,17 +1,18 @@
 use crate::api::app::{ApiError, AppState};
 use crate::db::models;
 use crate::db::queries::reservation;
+use crate::utils::gen_id;
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
 };
 use chrono::NaiveDate;
 use serde::Deserialize;
-use uuid::Uuid;
 
 #[derive(Deserialize)]
-pub struct Reservation {
+pub struct ReservationPayload {
     pub id: String,
+    pub member_id: String,
     pub court_number: i16,
     pub reservation_date: NaiveDate,
     pub reservation_time: i16,
@@ -19,35 +20,35 @@ pub struct Reservation {
 
 pub async fn add_reservation(
     State(state): State<AppState>,
-    Path(member_id): Path<Uuid>,
-    Json(payload): Json<Reservation>,
-) -> Result<Json<Uuid>, ApiError> {
-    let id: Option<Uuid> = match payload.id {
-        ref s if s.is_empty() => None,
-        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
+    Json(payload): Json<ReservationPayload>,
+) -> Result<Json<String>, ApiError> {
+    let id: String = match payload.id {
+        ref id if id.is_empty() => gen_id().expect("Could not generate an ID."),
+        id => id,
     };
 
     let client = state.pool.get().await?;
-    let id = reservation::add_reservation(
+    let id_from_db: String = reservation::add_reservation(
         &client,
         &models::Reservation {
             id,
+            member_id: payload.member_id,
             court_number: payload.court_number,
             reservation_date: payload.reservation_date,
             reservation_time: payload.reservation_time,
         },
-        &member_id,
     )
     .await?;
-    Ok(Json(id))
+
+    Ok(Json(id_from_db))
 }
 
 pub async fn get_reservation(
     State(state): State<AppState>,
-    Path(reservation_id): Path<Uuid>,
+    Path(reservation_id): Path<String>,
 ) -> Result<Json<models::Reservation>, ApiError> {
     let client = state.pool.get().await?;
-    match reservation::get_reservation(&client, reservation_id).await {
+    match reservation::get_reservation(&client, &reservation_id).await {
         Ok(reservation) => Ok(Json(reservation)),
         Err(_) => Err(ApiError::NotFound),
     }
@@ -64,18 +65,14 @@ pub async fn get_reservations_by_date(
 
 pub async fn update_reservation(
     State(state): State<AppState>,
-    Json(payload): Json<Reservation>,
+    Json(payload): Json<ReservationPayload>,
 ) -> Result<StatusCode, ApiError> {
-    let id: Option<Uuid> = match payload.id {
-        ref s if s.is_empty() => None,
-        _ => Some(Uuid::parse_str(&payload.id).expect("Couldn't parse UUID from string")),
-    };
-
     let client = state.pool.get().await?;
     let affected = reservation::update_reservation(
         &client,
         &models::Reservation {
-            id,
+            id: payload.id,
+            member_id: payload.member_id,
             court_number: payload.court_number,
             reservation_date: payload.reservation_date,
             reservation_time: payload.reservation_time,
@@ -92,10 +89,10 @@ pub async fn update_reservation(
 
 pub async fn delete_reservation(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id): Path<String>,
 ) -> Result<StatusCode, ApiError> {
     let client = state.pool.get().await?;
-    let affected = reservation::delete_reservation(&client, id).await?;
+    let affected = reservation::delete_reservation(&client, &id).await?;
     if affected == 1 {
         Ok(StatusCode::OK)
     } else {
