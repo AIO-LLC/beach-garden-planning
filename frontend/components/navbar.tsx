@@ -18,7 +18,7 @@ export const Navbar = () => {
           src="/logo.png"
           width={36}
         />
-        <p className="font-bold text-inherit ml-5">Beach Garden</p>
+        <p className="font-bold text-inherit ml-5">Beach Garden SXM</p>
       </NextLink>
       <Link
         className={buttonStyles({

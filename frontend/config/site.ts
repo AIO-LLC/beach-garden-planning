@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig
 
 export const siteConfig = {
-  name: "Beach Garden",
+  name: "Beach Garden SXM",
   description: "Réservez un terrain en ligne !",
   navItems: [
     {
