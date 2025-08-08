@@ -39,7 +39,6 @@ pub async fn login(
     };
     let cookie =
         format!("auth_token={token}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
-    println!("{cookie}");
 
     let mut response = (
         StatusCode::OK,
