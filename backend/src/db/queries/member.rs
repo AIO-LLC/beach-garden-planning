@@ -27,7 +27,24 @@ pub async fn add_member(client: &Client, member: &Member) -> Result<String, Erro
 pub async fn get_member(client: &Client, id: &String) -> Result<Member, Error> {
     let stmt: Statement = client.prepare("SELECT * FROM member WHERE id=$1").await?;
 
-    let row: Row = client.query_one(&stmt, &[&id]).await?;
+    let row: Row = client.query_one(&stmt, &[id]).await?;
+
+    Ok(Member {
+        id: row.try_get("id")?,
+        phone: row.try_get("phone")?,
+        password: row.try_get("password")?,
+        email: row.try_get("email")?,
+        first_name: row.try_get("first_name")?,
+        last_name: row.try_get("last_name")?,
+    })
+}
+
+pub async fn get_member_by_phone(client: &Client, phone: &String) -> Result<Member, Error> {
+    let stmt: Statement = client
+        .prepare("SELECT * FROM member WHERE phone=$1")
+        .await?;
+
+    let row: Row = client.query_one(&stmt, &[phone]).await?;
 
     Ok(Member {
         id: row.try_get("id")?,

@@ -43,7 +43,7 @@ pub async fn add_member(
     };
 
     // For first log in only
-    let otp: String = "açè29873houkhJHEZPh23^23P98Ehkb".to_string();
+    let otp: String = "123456".to_string();
     let hashed_otp: String = hash_password(&otp).expect("Could not hash password.");
 
     let client = state.pool.get().await?;

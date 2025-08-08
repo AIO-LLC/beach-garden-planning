@@ -1,3 +1,4 @@
+use crate::api::auth;
 use crate::api::wrappers;
 use axum::{
     Json,
@@ -140,6 +141,8 @@ pub async fn router(app_state: AppState) -> Router {
             get(wrappers::reservation::get_reservation)
                 .delete(wrappers::reservation::delete_reservation),
         )
+        // Authentication
+        .route("/login", post(auth::login))
         .with_state(app_state)
         .layer(cors)
 }

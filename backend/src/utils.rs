@@ -18,7 +18,7 @@ pub fn gen_id() -> Result<String, uniform::Error> {
     chars.push(digit_range.sample(&mut rng));
     chars.push(upper_range.sample(&mut rng));
 
-    for _ in 0..6 {
+    for _ in 0..4 {
         if rng.random_bool(0.5) {
             chars.push(digit_range.sample(&mut rng));
         } else {
