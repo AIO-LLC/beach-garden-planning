@@ -9,8 +9,8 @@ export const siteConfig = {
       href: "/"
     },
     {
-      label: "Devenir adhérent",
-      href: "/signup"
+      label: "Première connexion",
+      href: "/first-login"
     },
     {
       label: "Se connecter",
@@ -27,8 +27,8 @@ export const siteConfig = {
       href: "/"
     },
     {
-      label: "Devenir adhérent",
-      href: "/signup"
+      label: "Première connexion",
+      href: "/first-login"
     },
     {
       label: "Se connecter",
