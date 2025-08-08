@@ -1,32 +1,24 @@
-import type { NextRequest } from "next/server"
+import { NextResponse, NextRequest } from 'next/server'
+import type { NextFetchEvent } from 'next/server'
 
-import { NextResponse } from "next/server"
+const protectedPaths = ['/planning', '/profile']
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  if (pathname === "/confirm") {
-    const hasLoginFlag = request.cookies.get("loginAttempt")?.value === "true"
-
-    if (!hasLoginFlag) {
-      return NextResponse.redirect(new URL("/login", request.url))
+export function middleware(req: NextRequest, ev: NextFetchEvent) {
+  const { pathname } = req.nextUrl
+  if (protectedPaths.some((p) => pathname.startsWith(p))) {
+    const token = req.cookies.get('auth_token')?.value
+    if (!token) {
+      const loginUrl = req.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.searchParams.set('from', pathname)
+      return NextResponse.redirect(loginUrl)
     }
-
-    const response = NextResponse.next()
-
-    response.cookies.set({
-      name: "loginAttempt",
-      value: "",
-      maxAge: 0,
-      path: "/"
-    })
-
-    return response
+    // (Optional) server-side verify JWT here; if invalid, clear cookie and redirect
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/confirm"]
+  matcher: ['/planning'],
 }
