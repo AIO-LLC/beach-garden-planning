@@ -32,8 +32,14 @@ pub async fn login(
 
     let token: String = create_jwt(&member.phone).expect("Could not create JWT.");
 
+    let flags = if cfg!(debug_assertions) {
+        ""
+    } else {
+        "; Secure"
+    };
     let cookie =
-        format!("auth_token={token}; HttpOnly; Secure; SameSite=Strict; Max-Age=86400; Path=/",);
+        format!("auth_token={token}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
+    println!("{cookie}");
 
     let mut response = (
         StatusCode::OK,
