@@ -1,77 +1,67 @@
 "use client"
 
 import React from "react"
-import {
-  DatePicker,
-  Form,
-  Input,
-  Select,
-  SelectItem,
-  Checkbox,
-  Button
-} from "@heroui/react"
-import { getLocalTimeZone, today } from "@internationalized/date"
+import { Form, Input, Button } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function FirstLoginPage() {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [passwordConfirmation, setPasswordConfirmation] = React.useState("");
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [passwordConfirmation, setPasswordConfirmation] = React.useState("")
 
   const getEmailError = (value: string): string | null => {
-    if (value.length === 0) return null;
-    
+    if (value.length === 0) return null
+
     if (!EmailValidator.validate(value)) {
-      return "L'adresse email est invalide.";
+      return "L'adresse email est invalide."
     }
 
-    return null;
-  };
+    return null
+  }
 
   const getPasswordError = (value: string): string | null => {
-    if (value.length == 0) return null;
+    if (value.length == 0) return null
 
     if (value.length < 8) {
-      return "Le mot de passe doit contenir au moins 8 caractères.";
+      return "Le mot de passe doit contenir au moins 8 caractères."
     }
     if ((value.match(/[A-Z]/g) || []).length < 1) {
-      return "Le mot de passe doit contenir au moins une majuscule.";
+      return "Le mot de passe doit contenir au moins une majuscule."
     }
     if ((value.match(/[a-z]/g) || []).length < 1) {
-      return "Le mot de passe doit contenir au moins une minuscule.";
+      return "Le mot de passe doit contenir au moins une minuscule."
     }
     if ((value.match(/[0-9]/g) || []).length < 1) {
-      return "Le mot de passe doit contenir au moins un chiffre";
+      return "Le mot de passe doit contenir au moins un chiffre"
     }
     if ((value.match(/[^A-Za-z0-9]/gi) || []).length < 1) {
-      return "Le mot de passe doit contenir au moins un caractère spécial.";
+      return "Le mot de passe doit contenir au moins un caractère spécial."
     }
 
-    return null;
-  };
+    return null
+  }
 
-  const getPasswordConfirmationError = (value) => {
-    if (value.length == 0) return null;
+  const getPasswordConfirmationError = value => {
+    if (value.length == 0) return null
 
     if (value != password) {
       return "Les deux mots de passes sont différents."
     }
 
-    return  null;
-  };
+    return null
+  }
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
-    var { terms, ...data } = data
     const payload = {
       id: "",
-      ...data,
+      ...data
     }
 
     try {
@@ -121,31 +111,33 @@ export default function FirstLoginPage() {
         onValueChange={setEmail}
       />
       <Input
-          isRequired
-          errorMessage={getPasswordError(password)}
-          isInvalid={getPasswordError(password) !== null}
-          label="Mot de passe"
-          labelPlacement="outside"
-          name="password"
-          placeholder="Entrez votre mot de passe"
-          type="password"
-          value={password}
-          onValueChange={setPassword}
-        />
+        isRequired
+        errorMessage={getPasswordError(password)}
+        isInvalid={getPasswordError(password) !== null}
+        label="Mot de passe"
+        labelPlacement="outside"
+        name="password"
+        placeholder="Entrez votre mot de passe"
+        type="password"
+        value={password}
+        onValueChange={setPassword}
+      />
       <Input
-          isRequired
-          errorMessage={getPasswordConfirmationError(passwordConfirmation)}
-          isInvalid={getPasswordConfirmationError(passwordConfirmation) !== null}
-          label="Confirmation du mot de passe"
-          labelPlacement="outside"
-          name="password_confirmation"
-          placeholder="Entrez de nouveau votre mot de passe"
-          type="password"
-          value={passwordConfirmation}
-          onValueChange={setPasswordConfirmation}
-        />
+        isRequired
+        errorMessage={getPasswordConfirmationError(passwordConfirmation)}
+        isInvalid={getPasswordConfirmationError(passwordConfirmation) !== null}
+        label="Confirmation du mot de passe"
+        labelPlacement="outside"
+        name="password_confirmation"
+        placeholder="Entrez de nouveau votre mot de passe"
+        type="password"
+        value={passwordConfirmation}
+        onValueChange={setPasswordConfirmation}
+      />
 
-      <Button type="submit" color="primary">Confirmer</Button>
+      <Button color="primary" type="submit">
+        Confirmer
+      </Button>
     </Form>
   )
 }

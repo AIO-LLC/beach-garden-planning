@@ -2,8 +2,9 @@
 
 import React from "react"
 import { Form, Input, Button } from "@heroui/react"
-import { useRouter } from 'next/navigation'
-import Cookies from 'js-cookie'
+import { useRouter } from "next/navigation"
+import Cookies from "js-cookie"
+
 import { title } from "@/components/primitives"
 
 export default function LogInPage() {
@@ -24,8 +25,8 @@ export default function LogInPage() {
       //
       // if (!response.ok) throw new Error(`Erreur ${response.status}`)
 
-      Cookies.set('loginAttempt', 'true', { expires: 0.01, sameSite: 'lax' })
-      router.push('/confirm')
+      Cookies.set("loginAttempt", "true", { expires: 0.01, sameSite: "lax" })
+      router.push("/confirm")
     } catch (err: any) {
       console.error(err)
     }

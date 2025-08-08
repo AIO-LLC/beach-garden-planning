@@ -1,9 +1,7 @@
 "use client"
 
 import { Navbar as HeroUINavbar } from "@heroui/navbar"
-import { Link } from "@heroui/link"
 import NextLink from "next/link"
-import { button as buttonStyles } from "@heroui/theme"
 import { Image } from "@heroui/react"
 import NextImage from "next/image"
 
