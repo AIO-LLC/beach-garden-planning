@@ -20,16 +20,6 @@ export const Navbar = () => {
         />
         <p className="font-bold text-inherit ml-5">Beach Garden SXM</p>
       </NextLink>
-      <Link
-        className={buttonStyles({
-          variant: "flat",
-          radius: "50",
-          color: "primary"
-        })}
-        href="/login"
-      >
-        Se connecter
-      </Link>
     </HeroUINavbar>
   )
 }
