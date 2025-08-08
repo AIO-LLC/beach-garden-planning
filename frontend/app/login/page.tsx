@@ -43,6 +43,14 @@ export default function LogInPage() {
           placeholder="Entrez votre numéro de téléphone"
           type="text"
         />
+        <Input
+          required
+          label="Mot de passe"
+          labelPlacement="outside"
+          name="password"
+          placeholder="Entrez votre mot de passe"
+          type="password"
+        />
         <Button color="primary" type="submit">
           Se connecter
         </Button>
