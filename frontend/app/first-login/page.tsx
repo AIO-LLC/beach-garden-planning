@@ -4,6 +4,8 @@ import React from "react"
 import { Form, Input, Button } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
+import { title } from "@/components/primitives"
+
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
@@ -48,7 +50,7 @@ export default function FirstLoginPage() {
     if (value.length == 0) return null
 
     if (value != password) {
-      return "Les deux mots de passes sont différents."
+      return "Les deux mots de passe sont différents."
     }
 
     return null
@@ -75,69 +77,73 @@ export default function FirstLoginPage() {
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       const result = await response.json()
 
-      setSubmitted(result)
-      setErrors({})
+      console.log(result)
     } catch (err: any) {
-      setErrors({ submit: err.message })
+      console.error(err)
     }
   }
 
   return (
-    <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
-      <Input
-        isRequired
-        label="Prénom"
-        labelPlacement="outside"
-        name="first_name"
-        placeholder="Entrez votre prénom"
-      />
-      <Input
-        isRequired
-        label="Nom"
-        labelPlacement="outside"
-        name="last_name"
-        placeholder="Entrez votre nom de famille"
-      />
-      <Input
-        isRequired
-        errorMessage={getEmailError(email)}
-        isInvalid={getEmailError(email) !== null}
-        label="Adresse email"
-        labelPlacement="outside"
-        name="email"
-        placeholder="Entrez votre adresse email"
-        type="email"
-        value={email}
-        onValueChange={setEmail}
-      />
-      <Input
-        isRequired
-        errorMessage={getPasswordError(password)}
-        isInvalid={getPasswordError(password) !== null}
-        label="Mot de passe"
-        labelPlacement="outside"
-        name="password"
-        placeholder="Entrez votre mot de passe"
-        type="password"
-        value={password}
-        onValueChange={setPassword}
-      />
-      <Input
-        isRequired
-        errorMessage={getPasswordConfirmationError(passwordConfirmation)}
-        isInvalid={getPasswordConfirmationError(passwordConfirmation) !== null}
-        label="Confirmation du mot de passe"
-        labelPlacement="outside"
-        name="password_confirmation"
-        placeholder="Entrez de nouveau votre mot de passe"
-        type="password"
-        value={passwordConfirmation}
-        onValueChange={setPasswordConfirmation}
-      />
+    <div>
+      <h1 className={title()}>Finalisez votre inscription</h1>
+      <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
+        <Input
+          isRequired
+          label="Prénom"
+          labelPlacement="outside"
+          name="first_name"
+          placeholder="Entrez votre prénom"
+        />
+        <Input
+          isRequired
+          label="Nom"
+          labelPlacement="outside"
+          name="last_name"
+          placeholder="Entrez votre nom de famille"
+        />
+        <Input
+          isRequired
+          errorMessage={getEmailError(email)}
+          isInvalid={getEmailError(email) !== null}
+          label="Adresse email"
+          labelPlacement="outside"
+          name="email"
+          placeholder="Entrez votre adresse email"
+          type="email"
+          value={email}
+          onValueChange={setEmail}
+        />
+        <Input
+          isRequired
+          errorMessage={getPasswordError(password)}
+          isInvalid={getPasswordError(password) !== null}
+          label="Mot de passe"
+          labelPlacement="outside"
+          name="password"
+          placeholder="Entrez votre mot de passe"
+          type="password"
+          value={password}
+          onValueChange={setPassword}
+        />
+        <Input
+          isRequired
+          errorMessage={getPasswordConfirmationError(passwordConfirmation)}
+          isInvalid={
+            getPasswordConfirmationError(passwordConfirmation) !== null
+          }
+          label="Confirmation du mot de passe"
+          labelPlacement="outside"
+          name="password_confirmation"
+          placeholder="Entrez de nouveau votre mot de passe"
+          type="password"
+          value={passwordConfirmation}
+          onValueChange={setPasswordConfirmation}
+        />
 
-      <Button color="primary" type="submit">
-        Confirmer
-      </Button>
-    </Form>
+        <Button color="primary" type="submit">
+          Confirmer
+        </Button>
+      </Form>
+    </div>
   )
 }
