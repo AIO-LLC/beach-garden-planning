@@ -1,5 +1,6 @@
 use crate::api::auth;
 use crate::api::wrappers;
+use axum::http::header::{AUTHORIZATION, CONTENT_TYPE};
 use axum::{
     Json,
     http::{HeaderValue, Method, StatusCode},
@@ -16,7 +17,7 @@ use dotenvy::dotenv;
 use std::env;
 use thiserror::Error;
 use tokio_postgres::NoTls;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -113,7 +114,8 @@ pub async fn router(app_state: AppState) -> Router {
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers(Any);
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_credentials(true);
 
     Router::new()
         // Member routes
