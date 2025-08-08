@@ -1,6 +1,6 @@
 use crate::api::auth;
 use crate::api::wrappers;
-use axum::http::header::{AUTHORIZATION, CONTENT_TYPE};
+use axum::http::header::CONTENT_TYPE;
 use axum::{
     Json,
     http::{HeaderValue, Method, StatusCode},
@@ -114,7 +114,7 @@ pub async fn router(app_state: AppState) -> Router {
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_headers([CONTENT_TYPE])
         .allow_credentials(true);
 
     Router::new()
