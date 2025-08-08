@@ -20,15 +20,19 @@ export default function LogInPage() {
 
     try {
       const url = `${API_HOST}:${API_PORT}/login`
-      const loginResponse = await fetch('/login', {
+      const loginResponse = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: payload
+          body: JSON.stringify(payload)
       });
 
-      if (!loginResponse.ok) throw new Error(`Erreur ${loginResponse.status}`)
-
+      if (!loginResponse.ok) {
+        const { error } = await loginResponse.json()
+        if (loginResponse.status === 404) console.error("Wrong credentials")
+        else console.error("Unexpected error")
+        return
+      }
       router.push("/")
     } catch (err: any) {
       console.error(err)
