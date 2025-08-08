@@ -7,6 +7,9 @@ import Cookies from "js-cookie"
 
 import { title } from "@/components/primitives"
 
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+
 export default function LogInPage() {
   const router = useRouter()
 
@@ -16,17 +19,17 @@ export default function LogInPage() {
     var payload = Object.fromEntries(new FormData(e.currentTarget))
 
     try {
-      // const url = `${API_HOST}:${API_PORT}/login`
-      // const response = await fetch(url, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload)
-      // })
-      //
-      // if (!response.ok) throw new Error(`Erreur ${response.status}`)
+      const url = `${API_HOST}:${API_PORT}/login`
+      const loginResponse = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: payload
+      });
 
-      Cookies.set("loginAttempt", "true", { expires: 0.01, sameSite: "lax" })
-      router.push("/confirm")
+      if (!loginResponse.ok) throw new Error(`Erreur ${loginResponse.status}`)
+
+      router.push("/")
     } catch (err: any) {
       console.error(err)
     }
