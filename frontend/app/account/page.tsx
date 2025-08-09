@@ -20,7 +20,7 @@ type Member = {
   last_name: string
 }
 
-export default function ProfilePage() {
+export default function AccountPage() {
   const router = useRouter()
 
   const [member, setMember] = useState<Member | null>(null)
@@ -143,12 +143,12 @@ export default function ProfilePage() {
   }, [])
 
   if (!member) {
-    return <span>Chargement du profil...</span>
+    return <span>Chargement des informations du compte...</span>
   }
 
   return (
     <div>
-      <h1 className={title()}>Profil</h1>
+      <h1 className={title()}>Mon compte</h1>
       <Form className="gap-4" encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           label="Prénom"

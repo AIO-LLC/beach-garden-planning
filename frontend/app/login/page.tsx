@@ -37,9 +37,9 @@ export default function LogInPage() {
       const { message, is_profile_complete } = await loginResponse.json()
 
       if (is_profile_complete) {
-        router.push("/planning")
+        location.replace("/planning")
       } else {
-        router.push("/first-login")
+        location.replace("/first-login")
       }
     } catch (err: any) {
       console.error(err)

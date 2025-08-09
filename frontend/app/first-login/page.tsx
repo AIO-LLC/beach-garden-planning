@@ -98,7 +98,7 @@ export default function FirstLoginPage() {
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
-        router.push("/planning")
+        location.replace("/planning")
       }
     } catch (err: any) {
       console.error(err)
