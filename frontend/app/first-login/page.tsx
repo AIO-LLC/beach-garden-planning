@@ -3,13 +3,15 @@
 import React from "react"
 import { Form, Input, Button } from "@heroui/react"
 import * as EmailValidator from "email-validator"
-
+import { useRouter } from "next/navigation"
 import { title } from "@/components/primitives"
 
-const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!    
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function FirstLoginPage() {
+  const router = useRouter()
+
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [passwordConfirmation, setPasswordConfirmation] = React.useState("")
@@ -61,23 +63,43 @@ export default function FirstLoginPage() {
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
-    const payload = {
-      id: "",
-      ...data
+    const getJwtClaimsResponse = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+      method: "GET",
+      credentials: 'include',
+    })
+
+    if (!getJwtClaimsResponse.ok) {
+      const { error } = await getJwtClaimsResponse.json()
+      console.error(error)
+      return
     }
+
+    const { id, phone, _isProfileComplete } = await getJwtClaimsResponse.json()
+
+    // Remove password confirmation from data
+    const { password_confirmation, ...rest} = data
+
+    const payload = {
+      id: id,
+      phone: phone,
+      ...rest
+    }
+
+    console.log(payload)
 
     try {
       const url = `${API_HOST}:${API_PORT}/member`
       const response = await fetch(url, {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
-      const result = await response.json()
-
-      console.log(result)
+      else {
+        router.push("/planning")
+      }
     } catch (err: any) {
       console.error(err)
     }
