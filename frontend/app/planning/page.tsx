@@ -1,9 +1,9 @@
-import { title } from "@/components/primitives"
+"use client"
+
+import { useRouter } from "next/navigation"
 
 export default function PlanningPage() {
-  return (
-    <div>
-      <h1 className={title()}>Planning</h1>
-    </div>
-  )
+  const router = useRouter()
+  const today = new Date().toISOString().split('T')[0];
+  router.push(`/planning/${today}`)
 }
