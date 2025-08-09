@@ -8,13 +8,18 @@ import { notFound } from "next/navigation";
 
 type Reservation = {
   id: string;
+  member_id: string;
   court_number: number;
   reservation_time: number;
-  member_id: string;
-  member_name: string;
+  reservation_date: string,
+  member_first_name: string;
+  member_last_name: string;
 };
 
-export default function PlanningPage() {
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!    
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+
+export default function PlanningDatePage() {
   const router = useRouter();
   const { date } = useParams() as { date?: string };
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -27,7 +32,9 @@ export default function PlanningPage() {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) return setError(true);
 
-    const dt = new Date(date);
+    const [year, month, day] = date.split("-").map(Number);
+    const dt = new Date(year, month - 1, day); // Months are 0-based index
+
     if (dt.toISOString().split("T")[0] !== date) return setError(true);
 
     setDisplayDate(
@@ -38,11 +45,30 @@ export default function PlanningPage() {
       })
     );
 
-    // Mock reservations
-    setReservations([
-      { id: "A1", court_number: 1, reservation_time: 16, member_id: "M001", member_name: "John Doe" },
-      { id: "B2", court_number: 3, reservation_time: 18, member_id: "M002", member_name: "Jane Smith" },
-    ]);
+    const get_reservations_from_date = async (date) => {
+      try {
+        const url = `${API_HOST}:${API_PORT}/reservations/${date}`
+        const response = await fetch(url, {
+          method: "get",
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          console.log(response.status)
+          return []
+        }
+
+        const reservations_from_db: Reservation[] = await response.json()
+        return reservations_from_db
+      } catch (err: any) {
+        console.error(err)
+        return []
+      }
+    }
+    get_reservations_from_date(date).then((data) => {
+      setReservations(data)
+      console.log(data)
+    })
   }, [date]);
 
   if (error) notFound();
@@ -54,8 +80,46 @@ export default function PlanningPage() {
     router.push(`/planning/${newDate}`);
   };
 
-  const handleReservation = (hour: number, court: number) => {
-    console.log(`Réserver terrain ${court} à ${hour}h le ${date}`);
+  const handleReservation = async (hour: number, court: number) => {
+    const getJwtClaimsResponse = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+      method: "GET",
+      credentials: 'include',
+    })
+
+    if (!getJwtClaimsResponse.ok) {
+      const { error } = await getJwtClaimsResponse.json()
+      console.error(error)
+      return
+    }
+
+    const { id, _phone, _is_profile_complete } = await getJwtClaimsResponse.json()
+
+    const payload = {
+      id: "",
+      member_id: id,
+      court_number: court,
+      reservation_date: date,
+      reservation_time: hour
+    }
+
+    console.log(payload)
+
+    try {
+      const url = `${API_HOST}:${API_PORT}/reservation`
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) throw new Error(`Erreur ${response.status}`)
+      else {
+        location.reload()
+      }
+    } catch (err: any) {
+      console.error(err)
+    }
   };
 
   return (
@@ -84,7 +148,7 @@ export default function PlanningPage() {
                     <span>{court}</span>
                     {res ? (
                       <span className="text-gray-500 ">
-                        Réservé par {res.member_name}
+                        Réservé par {res.member_first_name} {res.member_last_name}
                       </span>
                     ) : (
                       <Button
