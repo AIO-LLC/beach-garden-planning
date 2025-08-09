@@ -1,10 +1,11 @@
 use crate::api::app::{ApiError, AppState};
 use crate::db::{models, queries};
-use crate::jwt::create_jwt;
+use crate::jwt::{create_jwt, verify_jwt};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::extract::{Json, State};
 use axum::http::{StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
+use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 use serde_json::json;
 
@@ -34,7 +35,7 @@ pub async fn login(
     let is_profile_complete: bool =
         member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
     let token: String =
-        create_jwt(&member.phone, is_profile_complete).expect("Could not create JWT.");
+        create_jwt(&member.id, &member.phone, is_profile_complete).expect("Could not create JWT.");
 
     let flags = if cfg!(debug_assertions) {
         ""
@@ -58,4 +59,20 @@ pub async fn login(
         .insert(SET_COOKIE, cookie.parse().unwrap());
 
     Ok(response)
+}
+
+pub async fn get_jwt_claims(
+    State(_state): State<AppState>,
+    jar: CookieJar,
+) -> Result<impl IntoResponse, ApiError> {
+    let token = jar.get("auth_token").ok_or(ApiError::NotFound)?.value();
+
+    let claims = verify_jwt(token).map_err(|_| ApiError::NotFound)?;
+
+    Ok(Json(json!({
+        "id": claims.sub,
+        "phone": claims.phone,
+        "is_profile_complete": claims.is_profile_complete,
+    }))
+    .into_response())
 }

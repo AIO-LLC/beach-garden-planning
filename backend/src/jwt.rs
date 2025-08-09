@@ -6,10 +6,11 @@ use std::env;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    sub: String,
+    pub sub: String,
     exp: usize,
     iat: usize,
-    is_profile_complete: bool,
+    pub phone: String,
+    pub is_profile_complete: bool,
 }
 
 fn get_secret() -> String {
@@ -18,6 +19,7 @@ fn get_secret() -> String {
 }
 
 pub fn create_jwt(
+    id: &str,
     phone: &str,
     is_profile_complete: bool,
 ) -> Result<String, jsonwebtoken::errors::Error> {
@@ -27,9 +29,10 @@ pub fn create_jwt(
         .timestamp() as usize;
 
     let claims = Claims {
-        sub: phone.to_string(),
+        sub: id.to_string(),
         exp: expiration,
         iat: Utc::now().timestamp() as usize,
+        phone: phone.to_string(),
         is_profile_complete,
     };
 
