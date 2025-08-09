@@ -6,6 +6,7 @@ use axum::extract::{Json, State};
 use axum::http::{StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
+use serde_json::json;
 
 #[derive(Deserialize)]
 pub struct LoginPayload {
@@ -30,7 +31,10 @@ pub async fn login(
         return Err(ApiError::NotFound);
     }
 
-    let token: String = create_jwt(&member.phone).expect("Could not create JWT.");
+    let is_profile_complete: bool =
+        member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
+    let token: String =
+        create_jwt(&member.phone, is_profile_complete).expect("Could not create JWT.");
 
     let flags = if cfg!(debug_assertions) {
         ""
@@ -42,8 +46,9 @@ pub async fn login(
 
     let mut response = (
         StatusCode::OK,
-        Json(serde_json::json!({
-            "message": "Login successful"
+        Json(json!({
+            "message": "Login successful",
+            "is_profile_complete": is_profile_complete
         })),
     )
         .into_response();

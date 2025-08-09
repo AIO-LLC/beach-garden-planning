@@ -9,6 +9,7 @@ pub struct Claims {
     sub: String,
     exp: usize,
     iat: usize,
+    is_profile_complete: bool,
 }
 
 fn get_secret() -> String {
@@ -16,7 +17,10 @@ fn get_secret() -> String {
     env::var("JWT_SECRET").expect("Undefined JWT_SECRET environment variable")
 }
 
-pub fn create_jwt(phone: &str) -> Result<String, jsonwebtoken::errors::Error> {
+pub fn create_jwt(
+    phone: &str,
+    is_profile_complete: bool,
+) -> Result<String, jsonwebtoken::errors::Error> {
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
         .expect("valid timestamp")
@@ -26,6 +30,7 @@ pub fn create_jwt(phone: &str) -> Result<String, jsonwebtoken::errors::Error> {
         sub: phone.to_string(),
         exp: expiration,
         iat: Utc::now().timestamp() as usize,
+        is_profile_complete,
     };
 
     encode(
