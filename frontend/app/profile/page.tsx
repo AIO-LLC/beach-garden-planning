@@ -156,6 +156,11 @@ export default function ProfilePage() {
           name="first_name"
           placeholder="Entrez votre prénom"
           value={member.first_name}
+          onValueChange={(newValue): string => {
+            setMember(prev => ({
+            ...prev,
+            first_name: newValue
+          }))}}
         />
         <Input
           label="Nom"
@@ -163,17 +168,26 @@ export default function ProfilePage() {
           name="last_name"
           placeholder="Entrez votre nom de famille"
           value={member.last_name}
+          onValueChange={(newValue): string => {
+            setMember(prev => ({
+            ...prev,
+            last_name: newValue
+          }))}}
         />
         <Input
-          errorMessage={getEmailError(email)}
-          isInvalid={getEmailError(email) !== null}
+          errorMessage={getEmailError(member.email)}
+          isInvalid={getEmailError(member.email) !== null}
           label="Adresse email"
           labelPlacement="outside"
           name="email"
           placeholder="Entrez votre adresse email"
           type="email"
           value={member.email}
-          onValueChange={setEmail}
+          onValueChange={(newValue): string => {
+            setMember(prev => ({
+            ...prev,
+            email: newValue
+          }))}}
         />
         <Link
           className={buttonStyles({
