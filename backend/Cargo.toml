@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 argon2 = { version = "0.5.3", features = ["std"] }
 axum = "0.8.4"
+axum-extra = { version = "0.10.1", features = ["cookie"] }
 bcrypt = "0.17.0"
 chrono = { version = "0.4.41", features = ["serde"] }
 deadpool-postgres = "0.14.1"
