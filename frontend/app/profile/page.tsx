@@ -1,5 +1,7 @@
 "use client"
 
+import { Link } from "@heroui/link"
+import { button as buttonStyles } from "@heroui/theme"
 import { useState, useEffect } from "react";
 import { Form, Input, Button } from "@heroui/react"
 import * as EmailValidator from "email-validator"
@@ -147,9 +149,8 @@ export default function ProfilePage() {
   return (
     <div>
       <h1 className={title()}>Profil</h1>
-      <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
+      <Form className="gap-4" encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
-          isRequired
           label="Prénom"
           labelPlacement="outside"
           name="first_name"
@@ -157,7 +158,6 @@ export default function ProfilePage() {
           value={member.first_name}
         />
         <Input
-          isRequired
           label="Nom"
           labelPlacement="outside"
           name="last_name"
@@ -165,7 +165,6 @@ export default function ProfilePage() {
           value={member.last_name}
         />
         <Input
-          isRequired
           errorMessage={getEmailError(email)}
           isInvalid={getEmailError(email) !== null}
           label="Adresse email"
@@ -176,35 +175,17 @@ export default function ProfilePage() {
           value={member.email}
           onValueChange={setEmail}
         />
-        <Input
-          isRequired
-          errorMessage={getPasswordError(password)}
-          isInvalid={getPasswordError(password) !== null}
-          label="Mot de passe"
-          labelPlacement="outside"
-          name="password"
-          placeholder="Entrez votre mot de passe"
-          type="password"
-          value={password}
-          onValueChange={setPassword}
-        />
-        <Input
-          isRequired
-          errorMessage={getPasswordConfirmationError(passwordConfirmation)}
-          isInvalid={
-            getPasswordConfirmationError(passwordConfirmation) !== null
-          }
-          label="Confirmation du mot de passe"
-          labelPlacement="outside"
-          name="password_confirmation"
-          placeholder="Entrez de nouveau votre mot de passe"
-          type="password"
-          value={passwordConfirmation}
-          onValueChange={setPasswordConfirmation}
-        />
-
+        <Link
+          className={buttonStyles({
+            color: "default",
+            radius: "md",
+          }) + " w-full my-4"}
+          href="/password"
+        >
+          Changer le mot de passe
+        </Link>
         <Button color="primary" type="submit">
-          Confirmer
+          Mettre à jour
         </Button>
       </Form>
     </div>
