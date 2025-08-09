@@ -89,11 +89,6 @@ pub async fn update_member(
     State(state): State<AppState>,
     Json(payload): Json<MemberPayload>,
 ) -> Result<StatusCode, ApiError> {
-    let id: String = match payload.id {
-        ref id if id.is_empty() => gen_id().expect("Could not generate an ID."),
-        id => id,
-    };
-
     let hashed_password: String =
         hash_password(&payload.password).expect("Could not hash the password.");
 
@@ -116,7 +111,7 @@ pub async fn update_member(
     let affected = member::update_member(
         &client,
         &models::Member {
-            id,
+            id: payload.id,
             phone: payload.phone,
             password: hashed_password,
             email,
