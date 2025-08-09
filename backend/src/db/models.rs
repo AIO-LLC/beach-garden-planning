@@ -19,3 +19,14 @@ pub struct Reservation {
     pub reservation_date: NaiveDate,
     pub reservation_time: i16,
 }
+
+#[derive(Debug, Serialize)]
+pub struct ReservationWithNames {
+    pub id: String,
+    pub member_id: String,
+    pub court_number: i16,
+    pub reservation_date: NaiveDate,
+    pub reservation_time: i16,
+    pub member_first_name: String,
+    pub member_last_name: String,
+}

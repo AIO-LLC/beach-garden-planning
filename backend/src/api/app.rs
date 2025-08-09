@@ -136,7 +136,7 @@ pub async fn router(app_state: AppState) -> Router {
         )
         .route(
             "/reservations/{date}",
-            get(wrappers::reservation::get_reservations_by_date),
+            get(wrappers::reservation::get_reservations_with_names_by_date),
         )
         .route(
             "/reservation/{id}",

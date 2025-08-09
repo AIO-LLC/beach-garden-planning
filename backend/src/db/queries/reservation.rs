@@ -1,4 +1,4 @@
-use crate::db::models::Reservation;
+use crate::db::models::{Reservation, ReservationWithNames};
 use chrono::NaiveDate;
 use tokio_postgres::{Client, Error, Row, Statement};
 
@@ -40,24 +40,41 @@ pub async fn get_reservation(client: &Client, id: &String) -> Result<Reservation
     })
 }
 
-pub async fn get_reservations_by_date(
+pub async fn get_reservations_with_names_by_date(
     client: &Client,
     date: &NaiveDate,
-) -> Result<Vec<Reservation>, Error> {
+) -> Result<Vec<ReservationWithNames>, Error> {
     let stmt: Statement = client
-        .prepare("SELECT * FROM reservation WHERE reservation_date=$1")
+        .prepare(
+            "
+            SELECT
+              r.id,
+              r.member_id,
+              r.court_number,
+              r.reservation_date,
+              r.reservation_time,
+              m.first_name,
+              m.last_name
+            FROM reservation r
+            JOIN member m ON r.member_id = m.id
+            WHERE r.reservation_date = $1
+            ORDER BY r.reservation_time, r.court_number
+            ",
+        )
         .await?;
 
     let rows: Vec<Row> = client.query(&stmt, &[date]).await?;
 
     rows.into_iter()
-        .map(|row| -> Result<Reservation, Error> {
-            Ok(Reservation {
+        .map(|row| {
+            Ok(ReservationWithNames {
                 id: row.try_get("id")?,
                 member_id: row.try_get("member_id")?,
                 court_number: row.try_get("court_number")?,
                 reservation_date: row.try_get("reservation_date")?,
                 reservation_time: row.try_get("reservation_time")?,
+                member_first_name: row.try_get("first_name")?,
+                member_last_name: row.try_get("last_name")?,
             })
         })
         .collect()

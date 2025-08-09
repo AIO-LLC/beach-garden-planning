@@ -54,12 +54,12 @@ pub async fn get_reservation(
     }
 }
 
-pub async fn get_reservations_by_date(
+pub async fn get_reservations_with_names_by_date(
     State(state): State<AppState>,
     Path(date): Path<NaiveDate>,
-) -> Result<Json<Vec<models::Reservation>>, ApiError> {
+) -> Result<Json<Vec<models::ReservationWithNames>>, ApiError> {
     let client = state.pool.get().await?;
-    let reservations = reservation::get_reservations_by_date(&client, &date).await?;
+    let reservations = reservation::get_reservations_with_names_by_date(&client, &date).await?;
     Ok(Json(reservations))
 }
 
