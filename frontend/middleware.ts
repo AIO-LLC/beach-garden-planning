@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server"
 import type { NextFetchEvent } from "next/server"
 
-const protectedPaths = ["/planning", "/profile"]
+const protectedPaths = ["/planning", "/account"]
 
 export function middleware(req: NextRequest, ev: NextFetchEvent) {
   const { pathname } = req.nextUrl
@@ -21,5 +21,5 @@ export function middleware(req: NextRequest, ev: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ["/planning", "/profile"],
+  matcher: ["/planning", "/account"],
 }
