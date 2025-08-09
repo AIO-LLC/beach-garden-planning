@@ -61,6 +61,21 @@ pub async fn login(
     Ok(response)
 }
 
+pub async fn logout() -> impl IntoResponse {
+    let flags = if cfg!(debug_assertions) {
+        ""
+    } else {
+        "; Secure"
+    };
+    let cookie = format!("auth_token=; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
+
+    (
+        StatusCode::NO_CONTENT,
+        [(SET_COOKIE, cookie)],
+        "", // empty body
+    )
+}
+
 pub async fn get_jwt_claims(
     State(_state): State<AppState>,
     jar: CookieJar,

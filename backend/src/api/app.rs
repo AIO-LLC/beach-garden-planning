@@ -145,6 +145,7 @@ pub async fn router(app_state: AppState) -> Router {
         )
         // Authentication
         .route("/login", post(auth::login))
+        .route("/logout", post(auth::logout))
         .route("/jwt-claims", get(auth::get_jwt_claims))
         .with_state(app_state)
         .layer(cors)
