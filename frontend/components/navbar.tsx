@@ -1,19 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react";
-import { Navbar as HeroUINavbar } from "@heroui/navbar";
-import {Button, Image, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem} from "@heroui/react";
-import NextLink from "next/link";
-import NextImage from "next/image";
+import { useState, useEffect } from "react"
+import { Navbar as HeroUINavbar } from "@heroui/navbar"
+import {
+  Button,
+  Image,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem
+} from "@heroui/react"
+import NextLink from "next/link"
+import NextImage from "next/image"
 import { useRouter } from "next/navigation"
 
-const API_HOST = process.env.NEXT_PUBLIC_API_HOST!;
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!;
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export const Navbar = () => {
   const router = useRouter()
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // On mount, check JWT
   useEffect(() => {
@@ -21,18 +28,18 @@ export const Navbar = () => {
       try {
         const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
           method: "GET",
-          credentials: "include",
-        });
-        console.log(res)
+          credentials: "include"
+        })
+
         if (res.ok) {
-          setIsLoggedIn(true);
+          setIsLoggedIn(true)
         }
       } catch {
-        setIsLoggedIn(false);
+        setIsLoggedIn(false)
       }
     }
-    checkAuth();
-  }, []);
+    checkAuth()
+  }, [])
 
   const handleAccountSettings = () => {
     router.push("/account")
@@ -41,21 +48,21 @@ export const Navbar = () => {
   const handleLogout = async () => {
     await fetch(`${API_HOST}:${API_PORT}/logout`, {
       method: "POST",
-      credentials: "include",
-    });
+      credentials: "include"
+    })
     location.replace("/")
-  };
+  }
 
   return (
-    <HeroUINavbar position="sticky" className="px-4">
+    <HeroUINavbar className="px-4" position="sticky">
       <div className="flex items-center justify-between w-full">
-        <NextLink href="/" className="flex items-center">
+        <NextLink className="flex items-center" href="/">
           <Image
             alt="Logo Beach Garden"
             as={NextImage}
             height={36}
-            width={36}
             src="/logo.png"
+            width={36}
           />
           <p className="font-bold ml-5">Beach Garden SXM</p>
         </NextLink>
@@ -77,5 +84,5 @@ export const Navbar = () => {
         )}
       </div>
     </HeroUINavbar>
-  );
-};
+  )
+}

@@ -2,8 +2,6 @@
 
 import React from "react"
 import { Form, Input, Button } from "@heroui/react"
-import { useRouter } from "next/navigation"
-import Cookies from "js-cookie"
 
 import { title } from "@/components/primitives"
 
@@ -11,8 +9,6 @@ const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function LogInPage() {
-  const router = useRouter()
-
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -21,20 +17,22 @@ export default function LogInPage() {
     try {
       const url = `${API_HOST}:${API_PORT}/login`
       const loginResponse = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(payload)
-      });
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      })
 
       if (!loginResponse.ok) {
         const { error } = await loginResponse.json()
+
         if (loginResponse.status === 404) console.error("Wrong credentials")
         else console.error(error)
+
         return
       }
 
-      const { message, is_profile_complete } = await loginResponse.json()
+      const { _message, is_profile_complete } = await loginResponse.json()
 
       if (is_profile_complete) {
         location.replace("/planning")

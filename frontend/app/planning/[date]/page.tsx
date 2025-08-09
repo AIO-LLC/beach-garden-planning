@@ -1,98 +1,111 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { title } from "@/components/primitives";
-import { Button, Accordion, AccordionItem } from "@heroui/react";
-import { notFound } from "next/navigation";
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { Button, Accordion, AccordionItem } from "@heroui/react"
+import { notFound } from "next/navigation"
+
+import { title } from "@/components/primitives"
 
 type Reservation = {
-  id: string;
-  member_id: string;
-  court_number: number;
-  reservation_time: number;
-  reservation_date: string,
-  member_first_name: string;
-  member_last_name: string;
-};
+  id: string
+  member_id: string
+  court_number: number
+  reservation_time: number
+  reservation_date: string
+  member_first_name: string
+  member_last_name: string
+}
 
-const API_HOST = process.env.NEXT_PUBLIC_API_HOST!    
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function PlanningDatePage() {
-  const router = useRouter();
-  const { date } = useParams() as { date?: string };
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [displayDate, setDisplayDate] = useState("");
-  const [error, setError] = useState(false);
+  const router = useRouter()
+  const { date } = useParams() as { date?: string }
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [displayDate, setDisplayDate] = useState("")
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    if (!date) return setError(true);
+    if (!date) return setError(true)
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) return setError(true);
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 
-    const [year, month, day] = date.split("-").map(Number);
-    const dt = new Date(year, month - 1, day); // Months are 0-based index
+    if (!dateRegex.test(date)) return setError(true)
 
-    if (dt.toISOString().split("T")[0] !== date) return setError(true);
+    const [year, month, day] = date.split("-").map(Number)
+    const dt = new Date(year, month - 1, day) // Months are 0-based index
+
+    if (dt.toISOString().split("T")[0] !== date) return setError(true)
 
     setDisplayDate(
       dt.toLocaleDateString("fr-FR", {
         weekday: "long",
         day: "numeric",
-        month: "long",
+        month: "long"
       })
-    );
+    )
 
-    const get_reservations_from_date = async (date) => {
+    const get_reservations_from_date = async date => {
       try {
         const url = `${API_HOST}:${API_PORT}/reservations/${date}`
         const response = await fetch(url, {
           method: "get",
-          credentials: 'include',
+          credentials: "include"
         })
 
         if (!response.ok) {
           console.log(response.status)
+
           return []
         }
 
         const reservations_from_db: Reservation[] = await response.json()
+
         return reservations_from_db
       } catch (err: any) {
         console.error(err)
+
         return []
       }
     }
-    get_reservations_from_date(date).then((data) => {
-      setReservations(data)
-      console.log(data)
-    })
-  }, [date]);
 
-  if (error) notFound();
+    get_reservations_from_date(date).then(data => {
+      setReservations(data)
+    })
+  }, [date])
+
+  if (error) notFound()
 
   const navDay = (offset: number) => {
-    const dt = new Date(date!);
-    dt.setDate(dt.getDate() + offset);
-    const newDate = dt.toISOString().split("T")[0];
-    router.push(`/planning/${newDate}`);
-  };
+    const dt = new Date(date!)
+
+    dt.setDate(dt.getDate() + offset)
+    const newDate = dt.toISOString().split("T")[0]
+
+    router.push(`/planning/${newDate}`)
+  }
 
   const handleReservation = async (hour: number, court: number) => {
-    const getJwtClaimsResponse = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
-      method: "GET",
-      credentials: 'include',
-    })
+    const getJwtClaimsResponse = await fetch(
+      `${API_HOST}:${API_PORT}/jwt-claims`,
+      {
+        method: "GET",
+        credentials: "include"
+      }
+    )
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
+
       console.error(error)
+
       return
     }
 
-    const { id, _phone, _is_profile_complete } = await getJwtClaimsResponse.json()
+    const { id, _phone, _is_profile_complete } =
+      await getJwtClaimsResponse.json()
 
     const payload = {
       id: "",
@@ -102,14 +115,12 @@ export default function PlanningDatePage() {
       reservation_time: hour
     }
 
-    console.log(payload)
-
     try {
       const url = `${API_HOST}:${API_PORT}/reservation`
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(payload)
       })
 
@@ -120,26 +131,31 @@ export default function PlanningDatePage() {
     } catch (err: any) {
       console.error(err)
     }
-  };
+  }
 
   return (
     <div>
       <h1 className={title()}>Planning</h1>
       <div className="flex items-center gap-4 my-4">
-        <Button size="sm" onClick={() => navDay(-1)}>{"<"}</Button>
+        <Button size="sm" onClick={() => navDay(-1)}>
+          {"<"}
+        </Button>
         <span className="font-semibold">{displayDate}</span>
-        <Button size="sm" onClick={() => navDay(1)}>{">"}</Button>
+        <Button size="sm" onClick={() => navDay(1)}>
+          {">"}
+        </Button>
       </div>
 
       <Accordion variant="splitted">
-        {[16, 17, 18, 19, 20].map((hour) => (
-          <AccordionItem key={hour} title={`${hour}h`} aria-label={`${hour}h`}>
+        {[16, 17, 18, 19, 20].map(hour => (
+          <AccordionItem key={hour} aria-label={`${hour}h`} title={`${hour}h`}>
             <div>
               <span>Terrains</span>
-              {[1, 2, 3, 4].map((court) => {
+              {[1, 2, 3, 4].map(court => {
                 const res = reservations.find(
-                  (r) => r.reservation_time === hour && r.court_number === court
-                );
+                  r => r.reservation_time === hour && r.court_number === court
+                )
+
                 return (
                   <div
                     key={court}
@@ -148,7 +164,8 @@ export default function PlanningDatePage() {
                     <span>{court}</span>
                     {res ? (
                       <span className="text-gray-500 ">
-                        Réservé par {res.member_first_name} {res.member_last_name}
+                        Réservé par {res.member_first_name}{" "}
+                        {res.member_last_name}
                       </span>
                     ) : (
                       <Button
@@ -160,12 +177,12 @@ export default function PlanningDatePage() {
                       </Button>
                     )}
                   </div>
-                );
+                )
               })}
             </div>
           </AccordionItem>
         ))}
       </Accordion>
     </div>
-  );
+  )
 }
