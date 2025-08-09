@@ -33,7 +33,14 @@ export default function LogInPage() {
         else console.error("Unexpected error")
         return
       }
-      router.push("/")
+
+      const { message, is_profile_complete } = await loginResponse.json()
+
+      if (is_profile_complete) {
+        router.push("/planning")
+      } else {
+        router.push("/first-login")
+      }
     } catch (err: any) {
       console.error(err)
     }
