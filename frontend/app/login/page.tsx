@@ -30,7 +30,7 @@ export default function LogInPage() {
       if (!loginResponse.ok) {
         const { error } = await loginResponse.json()
         if (loginResponse.status === 404) console.error("Wrong credentials")
-        else console.error("Unexpected error")
+        else console.error(error)
         return
       }
 
