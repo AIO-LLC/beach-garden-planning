@@ -1,16 +1,17 @@
-import { NextResponse, NextRequest } from 'next/server'
-import type { NextFetchEvent } from 'next/server'
+import { NextResponse, NextRequest } from "next/server"
+import type { NextFetchEvent } from "next/server"
 
-const protectedPaths = ['/planning', '/profile']
+const protectedPaths = ["/planning", "/profile"]
 
 export function middleware(req: NextRequest, ev: NextFetchEvent) {
   const { pathname } = req.nextUrl
+
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
     const token = req.cookies.get('auth_token')?.value
+
     if (!token) {
       const loginUrl = req.nextUrl.clone()
-      loginUrl.pathname = '/login'
-      loginUrl.searchParams.set('from', pathname)
+      loginUrl.pathname = "/login"
       return NextResponse.redirect(loginUrl)
     }
     // (Optional) server-side verify JWT here; if invalid, clear cookie and redirect
@@ -20,5 +21,5 @@ export function middleware(req: NextRequest, ev: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ['/planning'],
+  matcher: ["/planning", "/profile"],
 }
