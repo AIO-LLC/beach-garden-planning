@@ -26,17 +26,16 @@ export default function PlanningDatePage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
   const [error, setError] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null) // Add this
 
   useEffect(() => {
     if (!date) return setError(true)
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-
     if (!dateRegex.test(date)) return setError(true)
 
     const [year, month, day] = date.split("-").map(Number)
-    const dt = new Date(year, month - 1, day) // Months are 0-based index
-
+    const dt = new Date(year, month - 1, day)
     if (dt.toISOString().split("T")[0] !== date) return setError(true)
 
     setDisplayDate(
@@ -47,7 +46,24 @@ export default function PlanningDatePage() {
       })
     )
 
-    const get_reservations_from_date = async date => {
+    // Get current user ID first
+    const getCurrentUser = async () => {
+      try {
+        const response = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+          method: "GET",
+          credentials: "include"
+        })
+        
+        if (response.ok) {
+          const { id } = await response.json()
+          setCurrentUserId(id)
+        }
+      } catch (err) {
+        console.error("Error getting current user:", err)
+      }
+    }
+
+    const get_reservations_from_date = async (date: string) => {
       try {
         const url = `${API_HOST}:${API_PORT}/reservations/${date}`
         const response = await fetch(url, {
@@ -57,22 +73,20 @@ export default function PlanningDatePage() {
 
         if (!response.ok) {
           console.log(response.status)
-
           return []
         }
 
         const reservations_from_db: Reservation[] = await response.json()
-
         return reservations_from_db
       } catch (err: any) {
         console.error(err)
-
         return []
       }
     }
 
-    get_reservations_from_date(date).then(data => {
-      setReservations(data)
+    // Load both user and reservations
+    Promise.all([getCurrentUser(), get_reservations_from_date(date)]).then(([_, reservationsData]) => {
+      setReservations(reservationsData || [])
     })
   }, [date])
 
@@ -80,36 +94,17 @@ export default function PlanningDatePage() {
 
   const navDay = (offset: number) => {
     const dt = new Date(date!)
-
     dt.setDate(dt.getDate() + offset)
     const newDate = dt.toISOString().split("T")[0]
-
     router.push(`/planning/${newDate}`)
   }
 
   const handleReservation = async (hour: number, court: number) => {
-    const getJwtClaimsResponse = await fetch(
-      `${API_HOST}:${API_PORT}/jwt-claims`,
-      {
-        method: "GET",
-        credentials: "include"
-      }
-    )
-
-    if (!getJwtClaimsResponse.ok) {
-      const { error } = await getJwtClaimsResponse.json()
-
-      console.error(error)
-
-      return
-    }
-
-    const { id, _phone, _is_profile_complete } =
-      await getJwtClaimsResponse.json()
+    if (!currentUserId) return
 
     const payload = {
       id: "",
-      member_id: id,
+      member_id: currentUserId,
       court_number: court,
       reservation_date: date,
       reservation_time: hour
@@ -133,15 +128,32 @@ export default function PlanningDatePage() {
     }
   }
 
+  const handleCancelReservation = async (reservationId: string) => {
+    try {
+      const url = `${API_HOST}:${API_PORT}/reservation/${reservationId}`
+      const response = await fetch(url, {
+        method: "DELETE",
+        credentials: "include"
+      })
+
+      if (!response.ok) throw new Error(`Erreur ${response.status}`)
+      else {
+        location.reload()
+      }
+    } catch (err: any) {
+      console.error(err)
+    }
+  }
+
   return (
     <div>
       <h1 className={title()}>Planning</h1>
       <div className="flex items-center gap-4 my-4">
-        <Button size="sm" onClick={() => navDay(-1)}>
+        <Button color="primary" size="sm" onClick={() => navDay(-1)}>
           {"<"}
         </Button>
         <span className="font-semibold">{displayDate}</span>
-        <Button size="sm" onClick={() => navDay(1)}>
+        <Button color="primary" size="sm" onClick={() => navDay(1)}>
           {">"}
         </Button>
       </div>
@@ -163,10 +175,21 @@ export default function PlanningDatePage() {
                   >
                     <span>{court}</span>
                     {res ? (
-                      <span className="text-gray-500 ">
-                        Réservé par {res.member_first_name}{" "}
-                        {res.member_last_name}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {currentUserId === res.member_id ? (
+                          <Button
+                            color="danger"
+                            size="sm"
+                            onClick={() => handleCancelReservation(res.id)}
+                          >
+                            Annuler
+                          </Button>
+                        ) : (
+                        <span className="text-gray-500">
+                          Réservé par {res.member_first_name} {res.member_last_name}
+                        </span>
+                        )}
+                      </div>
                     ) : (
                       <Button
                         color="primary"
