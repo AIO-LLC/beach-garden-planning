@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Form, Input, Button } from "@heroui/react"
+import { Form, Input, Button, addToast } from "@heroui/react"
 
 import { title } from "@/components/primitives"
 
@@ -12,7 +12,7 @@ export default function LogInPage() {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    var payload = Object.fromEntries(new FormData(e.currentTarget))
+    const payload = Object.fromEntries(new FormData(e.currentTarget))
 
     try {
       const url = `${API_HOST}:${API_PORT}/login`
@@ -24,15 +24,16 @@ export default function LogInPage() {
       })
 
       if (!loginResponse.ok) {
-        const { error } = await loginResponse.json()
+        addToast({
+          title: "Numéro de téléphone ou mot de passe incorrect.",
+          color: "danger",
+        })
 
-        if (loginResponse.status === 404) console.error("Wrong credentials")
-        else console.error(error)
-
+        // TODO: Update response from backend when unknown phone number or wrong password, and show a toast with another error message for server errors or others
         return
       }
 
-      const { _message, is_profile_complete } = await loginResponse.json()
+      const { is_profile_complete } = await loginResponse.json()
 
       if (is_profile_complete) {
         location.replace("/planning")
@@ -41,6 +42,11 @@ export default function LogInPage() {
       }
     } catch (err: any) {
       console.error(err)
+      addToast({
+        title: "Erreur",
+        description: "Une erreur est survenue. Veuillez réessayer plus tard.",
+        color: "danger",
+      })
     }
   }
 
