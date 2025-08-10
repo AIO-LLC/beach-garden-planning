@@ -26,16 +26,20 @@ export default function PlanningDatePage() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
   const [error, setError] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null) // Add this
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentUserHasReservation, setCurrentUserHasReservation] =
+    useState<boolean>(false) // I added this but I don't know how to update it
 
   useEffect(() => {
     if (!date) return setError(true)
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+
     if (!dateRegex.test(date)) return setError(true)
 
     const [year, month, day] = date.split("-").map(Number)
     const dt = new Date(year, month - 1, day)
+
     if (dt.toISOString().split("T")[0] !== date) return setError(true)
 
     setDisplayDate(
@@ -46,16 +50,16 @@ export default function PlanningDatePage() {
       })
     )
 
-    // Get current user ID first
     const getCurrentUser = async () => {
       try {
         const response = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
           method: "GET",
           credentials: "include"
         })
-        
+
         if (response.ok) {
           const { id } = await response.json()
+
           setCurrentUserId(id)
         }
       } catch (err) {
@@ -73,29 +77,43 @@ export default function PlanningDatePage() {
 
         if (!response.ok) {
           console.log(response.status)
+
           return []
         }
 
         const reservations_from_db: Reservation[] = await response.json()
+
         return reservations_from_db
       } catch (err: any) {
         console.error(err)
+
         return []
       }
     }
 
-    // Load both user and reservations
-    Promise.all([getCurrentUser(), get_reservations_from_date(date)]).then(([_, reservationsData]) => {
-      setReservations(reservationsData || [])
-    })
-  }, [date])
+    Promise.all([getCurrentUser(), get_reservations_from_date(date)]).then(
+      ([_, reservationsData]) => {
+        setReservations(reservationsData || [])
+
+        if (currentUserId) {
+          const has = reservationsData.some(
+            reservation => reservation.member_id === currentUserId
+          )
+
+          setCurrentUserHasReservation(has)
+        }
+      }
+    )
+  }, [date, currentUserId])
 
   if (error) notFound()
 
   const navDay = (offset: number) => {
     const dt = new Date(date!)
+
     dt.setDate(dt.getDate() + offset)
     const newDate = dt.toISOString().split("T")[0]
+
     router.push(`/planning/${newDate}`)
   }
 
@@ -185,19 +203,22 @@ export default function PlanningDatePage() {
                             Annuler
                           </Button>
                         ) : (
-                        <span className="text-gray-500">
-                          Réservé par {res.member_first_name} {res.member_last_name}
-                        </span>
+                          <span className="text-gray-500">
+                            Réservé par {res.member_first_name}{" "}
+                            {res.member_last_name}
+                          </span>
                         )}
                       </div>
                     ) : (
-                      <Button
-                        color="primary"
-                        size="sm"
-                        onClick={() => handleReservation(hour, court)}
-                      >
-                        Réserver
-                      </Button>
+                      !currentUserHasReservation && (
+                        <Button
+                          color="primary"
+                          size="sm"
+                          onClick={() => handleReservation(hour, court)}
+                        >
+                          Réserver
+                        </Button>
+                      )
                     )}
                   </div>
                 )
