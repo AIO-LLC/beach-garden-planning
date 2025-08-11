@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { Button, Accordion, AccordionItem } from "@heroui/react"
+import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 
 import { title } from "@/components/primitives"
@@ -28,7 +28,7 @@ export default function PlanningDatePage() {
   const [error, setError] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserHasReservation, setCurrentUserHasReservation] =
-    useState<boolean>(false) // I added this but I don't know how to update it
+    useState<boolean>(false)
 
   useEffect(() => {
     if (!date) return setError(true)
@@ -94,17 +94,20 @@ export default function PlanningDatePage() {
     Promise.all([getCurrentUser(), get_reservations_from_date(date)]).then(
       ([_, reservationsData]) => {
         setReservations(reservationsData || [])
-
-        if (currentUserId) {
-          const has = reservationsData.some(
-            reservation => reservation.member_id === currentUserId
-          )
-
-          setCurrentUserHasReservation(has)
-        }
       }
     )
-  }, [date, currentUserId])
+  }, [date])
+
+  // Update currentUserHasReservation whenever reservations or currentUserId changes
+  useEffect(() => {
+    if (currentUserId) {
+      setCurrentUserHasReservation(
+        reservations.some(r => r.member_id === currentUserId)
+      )
+    } else {
+      setCurrentUserHasReservation(false)
+    }
+  }, [reservations, currentUserId])
 
   if (error) notFound()
 
@@ -115,6 +118,26 @@ export default function PlanningDatePage() {
     const newDate = dt.toISOString().split("T")[0]
 
     router.push(`/planning/${newDate}`)
+  }
+
+  async function refreshReservations(
+    date: string,
+    setReservations: React.Dispatch<React.SetStateAction<Reservation[]>>
+  ) {
+    try {
+      const url = `${API_HOST}:${API_PORT}/reservations/${date}`
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include"
+      })
+
+      if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
+      const data: Reservation[] = await response.json()
+
+      setReservations(data)
+    } catch (err) {
+      console.error("Error refreshing reservations:", err)
+    }
   }
 
   const handleReservation = async (hour: number, court: number) => {
@@ -129,8 +152,7 @@ export default function PlanningDatePage() {
     }
 
     try {
-      const url = `${API_HOST}:${API_PORT}/reservation`
-      const response = await fetch(url, {
+      const response = await fetch(`${API_HOST}:${API_PORT}/reservation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -138,28 +160,48 @@ export default function PlanningDatePage() {
       })
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
-      else {
-        location.reload()
-      }
+
+      addToast({
+        title: "Votre réservation a été enregistrée.",
+        color: "success"
+      })
+
+      await refreshReservations(date!, setReservations)
     } catch (err: any) {
       console.error(err)
+      addToast({
+        title:
+          "Une erreur est survenue lors de la réservation. Veuillez réessayer plus tard.",
+        color: "danger"
+      })
     }
   }
 
   const handleCancelReservation = async (reservationId: string) => {
     try {
-      const url = `${API_HOST}:${API_PORT}/reservation/${reservationId}`
-      const response = await fetch(url, {
-        method: "DELETE",
-        credentials: "include"
-      })
+      const response = await fetch(
+        `${API_HOST}:${API_PORT}/reservation/${reservationId}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      )
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
-      else {
-        location.reload()
-      }
+
+      addToast({
+        title: "Votre réservation a été annulée."
+      })
+
+      // REFRESH from server to clear the deleted reservation
+      await refreshReservations(date!, setReservations)
     } catch (err: any) {
       console.error(err)
+      addToast({
+        title:
+          "Une erreur est survenue lors de l'annulation de votre réservation. Veuillez réessayer plus tard.",
+        color: "danger"
+      })
     }
   }
 
