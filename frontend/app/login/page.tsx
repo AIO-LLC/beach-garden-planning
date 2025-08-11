@@ -26,7 +26,7 @@ export default function LogInPage() {
       if (!loginResponse.ok) {
         addToast({
           title: "Numéro de téléphone ou mot de passe incorrect.",
-          color: "danger",
+          color: "danger"
         })
 
         // TODO: Update response from backend when unknown phone number or wrong password, and show a toast with another error message for server errors or others
@@ -45,7 +45,7 @@ export default function LogInPage() {
       addToast({
         title: "Erreur",
         description: "Une erreur est survenue. Veuillez réessayer plus tard.",
-        color: "danger",
+        color: "danger"
       })
     }
   }

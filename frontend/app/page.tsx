@@ -15,8 +15,9 @@ export default function Home() {
       try {
         const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
           method: "GET",
-          credentials: "include",
+          credentials: "include"
         })
+
         setIsLoggedIn(res.ok)
       } catch {
         setIsLoggedIn(false)
@@ -29,20 +30,14 @@ export default function Home() {
     <ul>
       {!isLoggedIn && (
         <li>
-          <Link
-            className={buttonStyles({ color: "primary" })}
-            href="/login"
-          >
+          <Link className={buttonStyles({ color: "primary" })} href="/login">
             Se connecter
           </Link>
         </li>
       )}
       {isLoggedIn && (
         <li>
-          <Link
-            className={buttonStyles({ color: "primary" })}
-            href="/planning"
-          >
+          <Link className={buttonStyles({ color: "primary" })} href="/planning">
             Réserver un terrain
           </Link>
         </li>
