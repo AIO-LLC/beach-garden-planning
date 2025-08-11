@@ -104,9 +104,12 @@ impl IntoResponse for ApiError {
 }
 
 pub async fn router(app_state: AppState) -> Router {
+    dotenv().ok();
+    let api_ip: &str = &env::var("API_IP").expect("Undefined API_IP environment variable");
+
     let cors = CorsLayer::new()
         .allow_origin(
-            HeaderValue::from_str("http://localhost:3000").expect("Invalid origin header"),
+            HeaderValue::from_str(&format!("http://{api_ip}:3000")).expect("Invalid origin header"),
         )
         .allow_methods(vec![
             Method::GET,
