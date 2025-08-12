@@ -174,9 +174,9 @@ export default function AccountPage() {
               radius: "md"
             }) + " w-full my-4"
           }
-          href="/password"
+          href="/edit-password"
         >
-          Changer le mot de passe
+          Modifier mon mot de passe
         </Link>
         <Button color="primary" type="submit">
           Mettre à jour
