@@ -25,32 +25,10 @@ export default function PasswordForgottenPage() {
     e.preventDefault()
 
     try {
-      const getJwtClaimsResponse = await fetch(
-        `${API_HOST}:${API_PORT}/jwt-claims`,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      )
-
-      if (!getJwtClaimsResponse.ok) {
-        addToast({
-          title: "Une erreur est survenue. Veuillez réessayer plus tard.",
-          color: "danger"
-        })
-        const { error } = await getJwtClaimsResponse.json()
-        console.error(error)
-        return
-      }
-
-      const { id, _phone, _isProfileComplete } =
-        await getJwtClaimsResponse.json()
-
-      const payload = { id, email }
-
+      const payload = { email }
       const url = `${API_HOST}:${API_PORT}/password-forgotten`
       const passwordForgottenResponse = await fetch(url, {
-        method: "PATCH",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload)
