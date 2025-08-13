@@ -2,6 +2,7 @@
 
 import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
+import { Link } from "@heroui/link"
 
 import { title } from "@/components/primitives"
 
@@ -70,6 +71,9 @@ export default function LogInPage() {
           placeholder="Entrez votre mot de passe"
           type="password"
         />
+        <Link href="/password-forgotten">
+          Mot de passe oublié ? Cliquez ici.
+        </Link>
         <Button color="primary" type="submit">
           Se connecter
         </Button>
