@@ -2,11 +2,15 @@ use crate::api::app::{ApiError, AppState};
 use crate::db::models;
 use crate::db::queries::member;
 use crate::utils::{gen_id, hash_password};
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
+use axum::response::IntoResponse;
 use axum::{
     extract::{Json, Path, State},
     http::StatusCode,
+    response::Response,
 };
 use serde::Deserialize;
+use serde_json::json;
 
 #[derive(Deserialize)]
 pub struct MemberPayload {
@@ -16,6 +20,13 @@ pub struct MemberPayload {
     pub email: String,
     pub first_name: String,
     pub last_name: String,
+}
+
+#[derive(Deserialize)]
+pub struct EditPasswordPayload {
+    pub id: String,
+    pub current_password: String,
+    pub new_password: String,
 }
 
 pub async fn add_member(
@@ -136,6 +147,62 @@ pub async fn delete_member(
     let affected = member::delete_member(&client, &id).await?;
     if affected == 1 {
         Ok(StatusCode::OK)
+    } else {
+        Err(ApiError::NotFound)
+    }
+}
+
+pub async fn update_password(
+    State(state): State<AppState>,
+    Json(payload): Json<EditPasswordPayload>,
+) -> Result<Response, ApiError> {
+    let client = state.pool.get().await?;
+
+    // Check if current_password is correct
+    let member: models::Member = member::get_member(&client, &payload.id).await?;
+
+    let parsed_hash = PasswordHash::new(&member.password).map_err(|_| ApiError::NotFound)?;
+
+    if Argon2::default()
+        .verify_password(payload.current_password.as_bytes(), &parsed_hash)
+        .is_err()
+    {
+        return Err(ApiError::WrongCredentials);
+    }
+
+    // Check if new_password == current_password -> Error
+    if payload.current_password.eq(&payload.new_password) {
+        return Err(ApiError::NewPasswordMustBeDifferent);
+    }
+
+    // Hash new_password
+    let hashed_new_password: String =
+        hash_password(&payload.new_password).expect("Could not hash new password.");
+
+    // Store hash in db
+    let affected = member::update_member(
+        &client,
+        &models::Member {
+            id: payload.id,
+            phone: member.phone,
+            password: hashed_new_password,
+            email: member.email,
+            first_name: member.first_name,
+            last_name: member.last_name,
+        },
+    )
+    .await?;
+
+    if affected == 1 {
+        let response = (
+            StatusCode::OK,
+            Json(json!({
+                "message": "Password updated successfully",
+            })),
+        )
+            .into_response();
+
+        Ok(response)
     } else {
         Err(ApiError::NotFound)
     }

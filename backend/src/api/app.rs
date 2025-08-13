@@ -62,6 +62,12 @@ pub enum ApiError {
 
     #[error("not found")]
     NotFound,
+
+    #[error("unauthorized")]
+    WrongCredentials,
+
+    #[error("unprocessable entity")]
+    NewPasswordMustBeDifferent,
 }
 
 impl IntoResponse for ApiError {
@@ -98,6 +104,13 @@ impl IntoResponse for ApiError {
                     format!("Connection pool error: {pool_err}"),
                 )
             }
+            ApiError::WrongCredentials => {
+                (StatusCode::UNAUTHORIZED, "Wrong credentials.".to_string())
+            }
+            ApiError::NewPasswordMustBeDifferent => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "New password must be different from the current password.".to_string(),
+            ),
         };
         (status, Json(serde_json::json!({ "error": msg }))).into_response()
     }
@@ -130,6 +143,7 @@ pub async fn router(app_state: AppState) -> Router {
             "/member/{id}",
             get(wrappers::member::get_member).delete(wrappers::member::delete_member),
         )
+        .route("/password", patch(wrappers::member::update_password))
         // Reservation routes
         .route(
             "/reservation",
