@@ -6,8 +6,10 @@ use axum::extract::{Json, State};
 use axum::http::{StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
 use axum_extra::extract::CookieJar;
+use chrono::{DateTime, Duration, Utc};
 use serde::Deserialize;
 use serde_json::json;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct LoginPayload {
@@ -90,4 +92,59 @@ pub async fn get_jwt_claims(
         "is_profile_complete": claims.is_profile_complete,
     }))
     .into_response())
+}
+
+pub struct PasswordResetToken {
+    pub token: String,
+    pub expires_at: DateTime<Utc>,
+}
+
+impl PasswordResetToken {
+    pub fn generate() -> Self {
+        Self {
+            token: Uuid::new_v4().to_string(),
+            expires_at: Utc::now() + Duration::hours(1),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct PasswordForgottenPayload {
+    pub email: String,
+}
+
+use crate::api::email::EmailService;
+
+pub async fn password_forgotten(
+    State(_state): State<AppState>,
+    Json(payload): Json<PasswordForgottenPayload>,
+) -> Result<Response, ApiError> {
+    let email_service = EmailService::new(
+        "smtp.gmail.com",
+        "anto.benedetti.pro@gmail.com",
+        "qdha ekaz lmal cpoa",
+        "noreply@beachgardensxm.fr".to_string(),
+    );
+
+    let reset_token = PasswordResetToken::generate();
+
+    match email_service
+        .send_password_reset_email(
+            &payload.email,
+            &reset_token.token,
+            "http://192.168.1.113:3000/reset-password",
+        )
+        .await
+    {
+        Ok(()) => println!(
+            "Password reset email sent with token: {}",
+            reset_token.token
+        ),
+        Err(error) => {
+            println!("{error:?}");
+            return Err(ApiError::NotFound);
+        }
+    }
+
+    Ok((StatusCode::OK).into_response())
 }

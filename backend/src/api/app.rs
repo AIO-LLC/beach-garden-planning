@@ -163,6 +163,7 @@ pub async fn router(app_state: AppState) -> Router {
         .route("/login", post(auth::login))
         .route("/logout", post(auth::logout))
         .route("/jwt-claims", get(auth::get_jwt_claims))
+        .route("/password-forgotten", post(auth::password_forgotten))
         .with_state(app_state)
         .layer(cors)
 }
