@@ -68,31 +68,43 @@ export default function EditPasswordPage() {
       const { id, _phone, _isProfileComplete } =
         await getJwtClaimsResponse.json()
 
-      const payload = { id: id, new_password: newPassword }
+      const payload = {
+        id: id,
+        current_password: password,
+        new_password: newPassword
+      }
 
-      // const url = `${API_HOST}:${API_PORT}/edit-password`
-      // const editPasswordResponse = await fetch(url, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   credentials: "include",
-      //   body: JSON.stringify(payload)
-      // })
-      //
-      // if (!editPasswordResponse.ok) {
-      //   addToast({
-      //     title: "Une erreur est survenue. Veuillez réessayer plus tard.",
-      //     color: "danger"
-      //   })
-      //
-      //   return
-      // }
+      const url = `${API_HOST}:${API_PORT}/password`
+      const editPasswordResponse = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
+      })
 
-      location.replace("/account")
+      switch (editPasswordResponse.status) {
+        case 200:
+          location.replace("/account")
+          break
+
+        case 401:
+          addToast({
+            title: "Le mot de passe actuel est incorrect.",
+            color: "danger"
+          })
+          break
+
+        case 422:
+          addToast({
+            title: "Le nouveau mot de passe doit être différent de l'actuel.",
+            color: "danger"
+          })
+          break
+      }
     } catch (err: any) {
       console.error(err)
       addToast({
-        title: "Erreur",
-        description: "Une erreur est survenue. Veuillez réessayer plus tard.",
+        title: "Une erreur est survenue. Veuillez réessayer plus tard.",
         color: "danger"
       })
     }
