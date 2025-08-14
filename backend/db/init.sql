@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 CREATE TABLE member (
   id CHAR(6) PRIMARY KEY,
   phone VARCHAR(15) UNIQUE NOT NULL, -- E.164 format, digits only
