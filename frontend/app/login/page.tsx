@@ -71,8 +71,8 @@ export default function LogInPage() {
           placeholder="Entrez votre mot de passe"
           type="password"
         />
-        <Link href="/password-forgotten">
-          Mot de passe oublié ? Cliquez ici.
+        <Link className="underline" href="/password-forgotten">
+          Mot de passe oublié ?
         </Link>
         <Button color="primary" type="submit">
           Se connecter
