@@ -142,6 +142,10 @@ pub async fn router(app_state: AppState) -> Router {
             "/member",
             post(wrappers::member::add_member).patch(wrappers::member::update_member),
         )
+        .route(
+            "/member-with-password",
+            patch(wrappers::member::update_member_with_password),
+        )
         .route("/members", get(wrappers::member::get_all_members))
         .route(
             "/member/{id}",

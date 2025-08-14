@@ -3,7 +3,7 @@
 import { Link } from "@heroui/link"
 import { button as buttonStyles } from "@heroui/theme"
 import { useState, useEffect } from "react"
-import { Form, Input, Button } from "@heroui/react"
+import { Form, Input, Button, addToast } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
 import { title } from "@/components/primitives"
@@ -48,21 +48,19 @@ export default function AccountPage() {
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
-
       console.error(error)
-
+      addToast({
+        title: "Une erreur est survenue. Veuillez réessayer plus tard.",
+        color: "danger"
+      })
       return
     }
 
-    const claims = getJwtClaimsResponse.json()
-
-    // Remove password confirmation from data
-    const { _password_confirmation, ...rest } = data
+    const claims = await getJwtClaimsResponse.json()
 
     const payload = {
       id: claims.id,
-      phone: claims.phone,
-      ...rest
+      ...data
     }
 
     try {
@@ -74,12 +72,23 @@ export default function AccountPage() {
         body: JSON.stringify(payload)
       })
 
-      if (!response.ok) throw new Error(`Erreur ${response.status}`)
-      else {
-        window.reload()
+      if (!response.ok) {
+        addToast({
+          title: "Une erreur est survenue. Veuillez réessayer plus tard.",
+          color: "danger"
+        })
+      } else {
+        addToast({
+          title: "Votre compte a été mis à jour.",
+          color: "success"
+        })
       }
     } catch (err: any) {
       console.error(err)
+      addToast({
+        title: "Une erreur est survenue. Veuillez réessayer plus tard.",
+        color: "danger"
+      })
     }
   }
 
@@ -143,6 +152,21 @@ export default function AccountPage() {
         method="post"
         onSubmit={onSubmit}
       >
+        <Input
+          required
+          label="Numéro de téléphone"
+          labelPlacement="outside"
+          name="phone"
+          placeholder="Entrez votre numéro de téléphone"
+          type="text"
+          value={member.phone}
+          onValueChange={(newValue): string => {
+            setMember(prev => ({
+              ...prev,
+              phone: newValue
+            }))
+          }}
+        />
         <Input
           label="Prénom"
           labelPlacement="outside"

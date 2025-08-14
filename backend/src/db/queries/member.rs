@@ -91,6 +91,28 @@ pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
 }
 
 pub async fn update_member(client: &Client, updated_member: &Member) -> Result<u64, Error> {
+    let stmt: Statement = client
+        .prepare("UPDATE member SET phone=$1, email=$2, first_name=$3, last_name=$4 WHERE id=$5")
+        .await?;
+
+    client
+        .execute(
+            &stmt,
+            &[
+                &updated_member.phone,
+                &updated_member.email,
+                &updated_member.first_name,
+                &updated_member.last_name,
+                &updated_member.id,
+            ],
+        )
+        .await
+}
+
+pub async fn update_member_with_password(
+    client: &Client,
+    updated_member: &Member,
+) -> Result<u64, Error> {
     let stmt: Statement = client.prepare("UPDATE member SET phone=$1, password=$2, email=$3, first_name=$4, last_name=$5 WHERE id=$6").await?;
 
     client

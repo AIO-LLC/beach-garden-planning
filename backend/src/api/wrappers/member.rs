@@ -25,6 +25,15 @@ pub struct MemberPayload {
 }
 
 #[derive(Deserialize)]
+pub struct UpdateMemberPayload {
+    pub id: String,
+    pub phone: String,
+    pub email: String,
+    pub first_name: String,
+    pub last_name: String,
+}
+
+#[derive(Deserialize)]
 pub struct EditPasswordPayload {
     pub id: String,
     pub current_password: String,
@@ -107,6 +116,46 @@ pub async fn get_all_members(
 
 pub async fn update_member(
     State(state): State<AppState>,
+    Json(payload): Json<UpdateMemberPayload>,
+) -> Result<StatusCode, ApiError> {
+    let email: Option<String> = match payload.email {
+        ref email if email.is_empty() => None,
+        email => Some(email),
+    };
+
+    let first_name: Option<String> = match payload.first_name {
+        ref first_name if first_name.is_empty() => None,
+        first_name => Some(first_name),
+    };
+
+    let last_name: Option<String> = match payload.last_name {
+        ref last_name if last_name.is_empty() => None,
+        last_name => Some(last_name),
+    };
+
+    let client = state.pool.get().await?;
+    let affected = member::update_member_with_password(
+        &client,
+        &models::Member {
+            id: payload.id,
+            phone: payload.phone,
+            password: "".to_string(), // Unused
+            email,
+            first_name,
+            last_name,
+        },
+    )
+    .await?;
+
+    if affected == 1 {
+        Ok(StatusCode::OK)
+    } else {
+        Err(ApiError::NotFound)
+    }
+}
+
+pub async fn update_member_with_password(
+    State(state): State<AppState>,
     Json(payload): Json<MemberPayload>,
 ) -> Result<StatusCode, ApiError> {
     let hashed_password: String =
@@ -128,7 +177,7 @@ pub async fn update_member(
     };
 
     let client = state.pool.get().await?;
-    let affected = member::update_member(
+    let affected = member::update_member_with_password(
         &client,
         &models::Member {
             id: payload.id,

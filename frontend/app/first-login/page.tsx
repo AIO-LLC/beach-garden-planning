@@ -87,7 +87,7 @@ export default function FirstLoginPage() {
     }
 
     try {
-      const url = `${API_HOST}:${API_PORT}/member`
+      const url = `${API_HOST}:${API_PORT}/member-with-password`
       const response = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
