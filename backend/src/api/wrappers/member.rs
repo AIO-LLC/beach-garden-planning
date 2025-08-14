@@ -9,6 +9,7 @@ use axum::{
     http::StatusCode,
     response::Response,
 };
+use chrono::Local;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -214,7 +215,15 @@ pub async fn password_reset(
 
     // Check if token is still valid. If not return
     let token_from_db: PasswordResetToken =
-        password_reset_token::get_token_info(&client, &payload.token).await?;
+        match password_reset_token::get_token_info(&client, &payload.token).await {
+            Ok(token_from_db) => {
+                if token_from_db.expires_at < Local::now().naive_local() {
+                    return Err(ApiError::TokenExpired);
+                }
+                token_from_db
+            }
+            Err(_) => return Err(ApiError::TokenExpired),
+        };
 
     // Hash new_password
     let hashed_new_password: String =

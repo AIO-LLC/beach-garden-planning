@@ -53,7 +53,7 @@ impl EmailService {
         let email = Message::builder()
             .from(self.from_email.parse().unwrap())
             .to(to_email.parse().unwrap())
-            .subject("Mot de passe oublié")
+            .subject("Beach Garden SXM - Mot de passe oublié")
             .header(ContentType::TEXT_HTML)
             .body(email_body)
             .unwrap();
