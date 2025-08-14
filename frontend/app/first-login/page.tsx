@@ -97,22 +97,28 @@ export default function FirstLoginPage() {
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
-        // TODO: Update JWT in client browser since his profile is now completed
-        const getJwtClaimsResponse = await fetch(
-          `${API_HOST}:${API_PORT}/jwt-claims`,
+        const refreshJwtPayload = { member_id: id }
+        const refreshResponse = await fetch(
+          `${API_HOST}:${API_PORT}/refresh-jwt`,
           {
-            method: "GET",
-            credentials: "include"
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(refreshJwtPayload)
           }
         )
 
-        if (!getJwtClaimsResponse.ok) {
-          const { error } = await getJwtClaimsResponse.json()
-          console.error(error)
-          return
+        if (refreshResponse.ok) {
+          // Token refreshed successfully, redirect to planning
+          window.location.href = "/planning"
+        } else {
+          // If refresh fails, log the user out & redirect to login
+          console.warn(
+            "Token refresh failed, but profile was updated. Redirecting to login."
+          )
+          // TODO: delete JWT from client
+          window.location.href = "/login"
         }
-
-        location.replace("/planning")
       }
     } catch (err: any) {
       console.error(err)

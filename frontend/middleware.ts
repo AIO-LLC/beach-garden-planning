@@ -34,40 +34,42 @@ async function verifyJwt(token: string): Promise<JwtClaims | null> {
 
 export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
   const { pathname } = req.nextUrl
-  
+
   // Check if the current path requires authentication
   const requiresAuth = authRequiredPaths.some(p => pathname.startsWith(p))
-  
+
   if (requiresAuth) {
     const token = req.cookies.get("auth_token")?.value
-    
+
     // Not logged in (no JWT)
     if (!token) {
       const loginUrl = req.nextUrl.clone()
       loginUrl.pathname = "/login"
       return NextResponse.redirect(loginUrl)
     }
-    
+
     // Verify the JWT and check profile completion
     const claims = await verifyJwt(token)
-    
+
     if (!claims) {
       // Invalid or expired JWT - redirect to login
       const loginUrl = req.nextUrl.clone()
       loginUrl.pathname = "/login"
       return NextResponse.redirect(loginUrl)
     }
-    
+
     // Logged in but incomplete profile
-    const requiresProfile = profileRequiredPaths.some(p => pathname.startsWith(p))
-    
+    const requiresProfile = profileRequiredPaths.some(p =>
+      pathname.startsWith(p)
+    )
+
     if (requiresProfile && !claims.is_profile_complete) {
       const firstLoginUrl = req.nextUrl.clone()
       firstLoginUrl.pathname = "/first-login"
       return NextResponse.redirect(firstLoginUrl)
     }
   }
-  
+
   return NextResponse.next()
 }
 

@@ -19,6 +19,11 @@ pub struct LoginPayload {
     password: String,
 }
 
+#[derive(Deserialize)]
+pub struct RefreshJwtPayload {
+    member_id: String,
+}
+
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginPayload>,
@@ -144,4 +149,53 @@ pub async fn password_forgotten(
     }
 
     Ok((StatusCode::OK).into_response())
+}
+
+pub async fn refresh_jwt(
+    State(state): State<AppState>,
+    jar: CookieJar,
+    Json(payload): Json<RefreshJwtPayload>,
+) -> Result<Response, ApiError> {
+    // Get the current JWT token from cookies
+    let token = jar.get("auth_token").ok_or(ApiError::NotFound)?.value();
+
+    // Verify the current token is valid (but might have outdated claims)
+    let _ = match verify_jwt(token) {
+        Ok(claims) => claims,
+        Err(_) => return Err(ApiError::WrongCredentials),
+    };
+
+    // Fetch the latest user data from database
+    let client = state.pool.get().await?;
+    let member: models::Member = queries::member::get_member(&client, &payload.member_id).await?;
+    let is_profile_complete: bool =
+        member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
+
+    // Create a new JWT with updated profile completion status
+    let new_token: String =
+        create_jwt(&member.id, &member.phone, is_profile_complete).expect("Could not create JWT.");
+
+    // Set the new token in cookies
+    let flags = if cfg!(debug_assertions) {
+        ""
+    } else {
+        "; Secure"
+    };
+    let cookie =
+        format!("auth_token={new_token}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
+
+    let mut response = (
+        StatusCode::OK,
+        Json(json!({
+            "message": "JWT refreshed successfully",
+            "is_profile_complete": is_profile_complete
+        })),
+    )
+        .into_response();
+
+    response
+        .headers_mut()
+        .insert(SET_COOKIE, cookie.parse().unwrap());
+
+    Ok(response)
 }
