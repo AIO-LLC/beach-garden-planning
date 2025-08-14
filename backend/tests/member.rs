@@ -77,7 +77,10 @@ async fn update_member() -> Result<(), anyhow::Error> {
         "last_name": "Does",
     });
 
-    let update_member_res = server.patch("/member").json(&updated_member).await;
+    let update_member_res = server
+        .patch("/member-with-password")
+        .json(&updated_member)
+        .await;
     update_member_res.assert_status_ok();
 
     let client: Client = pool.get().await?;
