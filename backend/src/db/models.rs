@@ -1,5 +1,6 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Member {
@@ -29,4 +30,11 @@ pub struct ReservationWithNames {
     pub reservation_time: i16,
     pub member_first_name: String,
     pub member_last_name: String,
+}
+
+#[derive(Debug)]
+pub struct PasswordResetToken {
+    pub token: Uuid,
+    pub member_id: String,
+    pub expires_at: NaiveDateTime,
 }

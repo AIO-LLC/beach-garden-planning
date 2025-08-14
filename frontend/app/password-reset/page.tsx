@@ -2,13 +2,18 @@
 
 import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
+import { useSearchParams } from "next/navigation"
 
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
-export default function ResetPasswordPage() {
+export default function PasswordResetPage() {
+  const searchParams = useSearchParams()
+  const token: string = searchParams.get("token")
+  const email: string = searchParams.get("email")
+
   const [newPassword, setNewPassword] = React.useState<string>("")
   const [newPasswordConfirmation, setNewPasswordConfirmation] =
     React.useState<string>("")
@@ -49,30 +54,8 @@ export default function ResetPasswordPage() {
     e.preventDefault()
 
     try {
-      const getJwtClaimsResponse = await fetch(
-        `${API_HOST}:${API_PORT}/jwt-claims`,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      )
-
-      if (!getJwtClaimsResponse.ok) {
-        const { error } = await getJwtClaimsResponse.json()
-
-        console.error(error)
-
-        return
-      }
-      const { id, _phone, _isProfileComplete } =
-        await getJwtClaimsResponse.json()
-
-      const payload = {
-        id: id,
-        new_password: newPassword
-      }
-
-      const url = `${API_HOST}:${API_PORT}/reset-password`
+      const payload = { token, email, new_password: newPassword }
+      const url = `${API_HOST}:${API_PORT}/password-reset`
       const editPasswordResponse = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -82,10 +65,19 @@ export default function ResetPasswordPage() {
 
       switch (editPasswordResponse.status) {
         case 200:
-          location.replace("/planning")
+          location.replace("/login")
+          break
+
+        case 410:
+          addToast({
+            title:
+              'Le lien de réinitialisation du mot de passe a expiré. Veuillez retourner sur la page "Mot de passe oublié".',
+            color: "danger"
+          })
           break
 
         case 422:
+          console.error(await editPasswordResponse.json())
           addToast({
             title: "Le nouveau mot de passe doit être différent de l'actuel.",
             color: "danger"

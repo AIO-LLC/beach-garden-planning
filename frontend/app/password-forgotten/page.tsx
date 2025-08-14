@@ -3,6 +3,7 @@
 import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import * as EmailValidator from "email-validator"
+
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
@@ -39,8 +40,10 @@ export default function PasswordForgottenPage() {
           title: "Une erreur est survenue. Veuillez réessayer plus tard.",
           color: "danger"
         })
-        const { error } = await getJwtClaimsResponse.json()
+        const { error } = await passwordForgottenResponse.json()
+
         console.error(error)
+
         return
       }
 
@@ -57,7 +60,10 @@ export default function PasswordForgottenPage() {
   return (
     <div>
       <h1 className={title()}>Mot de passe oublié</h1>
-      <p>Veuillez entrer l'adresse email lié à votre compte afin de recevoir un lien pour réinitialiser votre mot de passe.</p>
+      <p>
+        Veuillez entrer l'adresse email lié à votre compte afin de recevoir un
+        lien pour réinitialiser votre mot de passe.
+      </p>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           isRequired

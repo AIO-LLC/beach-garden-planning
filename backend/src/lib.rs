@@ -15,6 +15,7 @@ pub mod db {
     pub mod models;
     pub mod queries {
         pub mod member;
+        pub mod password_reset_token;
         pub mod reservation;
     }
 }

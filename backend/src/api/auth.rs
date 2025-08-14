@@ -1,4 +1,5 @@
 use crate::api::app::{ApiError, AppState};
+use crate::api::email::EmailService;
 use crate::db::{models, queries};
 use crate::jwt::{create_jwt, verify_jwt};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
@@ -6,9 +7,10 @@ use axum::extract::{Json, State};
 use axum::http::{StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
 use axum_extra::extract::CookieJar;
-use chrono::{DateTime, Duration, Utc};
+use dotenvy::dotenv;
 use serde::Deserialize;
 use serde_json::json;
+use std::env;
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -94,55 +96,50 @@ pub async fn get_jwt_claims(
     .into_response())
 }
 
-pub struct PasswordResetToken {
-    pub token: String,
-    pub expires_at: DateTime<Utc>,
-}
-
-impl PasswordResetToken {
-    pub fn generate() -> Self {
-        Self {
-            token: Uuid::new_v4().to_string(),
-            expires_at: Utc::now() + Duration::hours(1),
-        }
-    }
-}
-
 #[derive(Deserialize)]
 pub struct PasswordForgottenPayload {
     pub email: String,
 }
 
-use crate::api::email::EmailService;
-
 pub async fn password_forgotten(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(payload): Json<PasswordForgottenPayload>,
 ) -> Result<Response, ApiError> {
-    let email_service = EmailService::new(
-        "smtp.gmail.com",
-        "anto.benedetti.pro@gmail.com",
-        "qdha ekaz lmal cpoa",
-        "noreply@beachgardensxm.fr".to_string(),
-    );
+    dotenv().ok();
+    let smtp_server: String =
+        env::var("SMTP_SERVER").expect("Undefined SMTP_SERVER environment variable");
+    let smtp_user: String =
+        env::var("SMTP_USER").expect("Undefined SMTP_USER environment variable");
+    let smtp_password: String =
+        env::var("SMTP_PASSWORD").expect("Undefined SMTP_PASSWORD environment variable");
+    let smtp_sender: String =
+        env::var("SMTP_SENDER").expect("Undefined SMTP_SENDER environment variable");
+    let api_ip: &str = &env::var("API_IP").unwrap_or("0.0.0.0".to_string());
 
-    let reset_token = PasswordResetToken::generate();
+    let email_service = EmailService::new(&smtp_server, &smtp_user, &smtp_password, &smtp_sender);
+
+    let client = state.pool.get().await?;
+    let member: models::Member =
+        match queries::member::get_member_by_email(&client, &payload.email).await {
+            Ok(member) => member,
+            Err(_) => return Ok((StatusCode::OK).into_response()), // Return OK for email enumeration protection
+        };
+
+    let token: Uuid = queries::password_reset_token::create_token(&client, &member.id).await?;
 
     match email_service
         .send_password_reset_email(
             &payload.email,
-            &reset_token.token,
-            "http://192.168.1.113:3000/reset-password",
+            &member.first_name.unwrap(),
+            &token,
+            &format!("http://{api_ip}:3000/password-reset"),
         )
         .await
     {
-        Ok(()) => println!(
-            "Password reset email sent with token: {}",
-            reset_token.token
-        ),
+        Ok(()) => println!("Password reset email sent with token: {token}",),
         Err(error) => {
             println!("{error:?}");
-            return Err(ApiError::NotFound);
+            return Err(ApiError::NotFound); // TODO: return a better error
         }
     }
 

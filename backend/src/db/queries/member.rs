@@ -56,6 +56,23 @@ pub async fn get_member_by_phone(client: &Client, phone: &String) -> Result<Memb
     })
 }
 
+pub async fn get_member_by_email(client: &Client, email: &String) -> Result<Member, Error> {
+    let stmt: Statement = client
+        .prepare("SELECT * FROM member WHERE email=$1")
+        .await?;
+
+    let row: Row = client.query_one(&stmt, &[email]).await?;
+
+    Ok(Member {
+        id: row.try_get("id")?,
+        phone: row.try_get("phone")?,
+        password: row.try_get("password")?,
+        email: row.try_get("email")?,
+        first_name: row.try_get("first_name")?,
+        last_name: row.try_get("last_name")?,
+    })
+}
+
 pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
     let rows: Vec<Row> = client.query("SELECT * FROM member", &[]).await?;
 
@@ -89,6 +106,18 @@ pub async fn update_member(client: &Client, updated_member: &Member) -> Result<u
             ],
         )
         .await
+}
+
+pub async fn update_member_password(
+    client: &Client,
+    member_id: &str,
+    new_password: &str,
+) -> Result<u64, Error> {
+    let stmt: Statement = client
+        .prepare("UPDATE member SET password=$1 WHERE id=$2")
+        .await?;
+
+    client.execute(&stmt, &[&new_password, &member_id]).await
 }
 
 pub async fn delete_member(client: &Client, id: &String) -> Result<u64, Error> {

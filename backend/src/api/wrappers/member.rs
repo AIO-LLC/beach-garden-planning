@@ -1,6 +1,6 @@
 use crate::api::app::{ApiError, AppState};
-use crate::db::models;
-use crate::db::queries::member;
+use crate::db::models::{self, PasswordResetToken};
+use crate::db::queries::{member, password_reset_token};
 use crate::utils::{gen_id, hash_password};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::response::IntoResponse;
@@ -11,6 +11,7 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::json;
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct MemberPayload {
@@ -26,6 +27,13 @@ pub struct MemberPayload {
 pub struct EditPasswordPayload {
     pub id: String,
     pub current_password: String,
+    pub new_password: String,
+}
+
+#[derive(Deserialize)]
+pub struct PasswordResetPayload {
+    pub token: Uuid,
+    pub email: String,
     pub new_password: String,
 }
 
@@ -180,24 +188,48 @@ pub async fn update_password(
         hash_password(&payload.new_password).expect("Could not hash new password.");
 
     // Store hash in db
-    let affected = member::update_member(
-        &client,
-        &models::Member {
-            id: payload.id,
-            phone: member.phone,
-            password: hashed_new_password,
-            email: member.email,
-            first_name: member.first_name,
-            last_name: member.last_name,
-        },
-    )
-    .await?;
+    let affected =
+        member::update_member_password(&client, &member.id, &hashed_new_password).await?;
 
     if affected == 1 {
         let response = (
             StatusCode::OK,
             Json(json!({
-                "message": "Password updated successfully",
+                "message": "Password updated successfully.",
+            })),
+        )
+            .into_response();
+
+        Ok(response)
+    } else {
+        Err(ApiError::NotFound)
+    }
+}
+
+pub async fn password_reset(
+    State(state): State<AppState>,
+    Json(payload): Json<PasswordResetPayload>,
+) -> Result<Response, ApiError> {
+    let client = state.pool.get().await?;
+
+    // Check if token is still valid. If not return
+    let token_from_db: PasswordResetToken =
+        password_reset_token::get_token_info(&client, &payload.token).await?;
+
+    // Hash new_password
+    let hashed_new_password: String =
+        hash_password(&payload.new_password).expect("Could not hash new password.");
+
+    // Store hash in db
+    let affected =
+        member::update_member_password(&client, &token_from_db.member_id, &hashed_new_password)
+            .await?;
+
+    if affected == 1 {
+        let response = (
+            StatusCode::OK,
+            Json(json!({
+                "message": "Password updated successfully.",
             })),
         )
             .into_response();

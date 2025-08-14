@@ -38,12 +38,30 @@ export default function AccountPage() {
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
+    const getJwtClaimsResponse = await fetch(
+      `${API_HOST}:${API_PORT}/jwt-claims`,
+      {
+        method: "GET",
+        credentials: "include"
+      }
+    )
+
+    if (!getJwtClaimsResponse.ok) {
+      const { error } = await getJwtClaimsResponse.json()
+
+      console.error(error)
+
+      return
+    }
+
+    const claims = getJwtClaimsResponse.json()
+
     // Remove password confirmation from data
     const { _password_confirmation, ...rest } = data
 
     const payload = {
-      id: id,
-      phone: phone,
+      id: claims.id,
+      phone: claims.phone,
       ...rest
     }
 

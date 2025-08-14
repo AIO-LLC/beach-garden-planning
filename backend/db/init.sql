@@ -16,3 +16,9 @@ CREATE TABLE reservation (
   CONSTRAINT unique_court_date_time UNIQUE (court_number, reservation_date, reservation_time),
   CONSTRAINT one_reservation_per_day UNIQUE (member_id, reservation_date)
 );
+
+CREATE TABLE password_reset_token (
+    token UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    member_id CHAR(6) NOT NULL REFERENCES member(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP NOT NULL DEFAULT NOW() + INTERVAL '1 hour'
+);
