@@ -71,9 +71,7 @@ export default function FirstLoginPage() {
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
-
       console.error(error)
-
       return
     }
 
@@ -99,6 +97,21 @@ export default function FirstLoginPage() {
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
+        // TODO: Update JWT in client browser since his profile is now completed
+        const getJwtClaimsResponse = await fetch(
+          `${API_HOST}:${API_PORT}/jwt-claims`,
+          {
+            method: "GET",
+            credentials: "include"
+          }
+        )
+
+        if (!getJwtClaimsResponse.ok) {
+          const { error } = await getJwtClaimsResponse.json()
+          console.error(error)
+          return
+        }
+
         location.replace("/planning")
       }
     } catch (err: any) {
