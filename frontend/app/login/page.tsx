@@ -3,6 +3,7 @@
 import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
+
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!

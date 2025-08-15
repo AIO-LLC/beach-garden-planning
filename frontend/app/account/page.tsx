@@ -48,11 +48,13 @@ export default function AccountPage() {
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
+
       console.error(error)
       addToast({
         title: "Une erreur est survenue. Veuillez réessayer plus tard.",
         color: "danger"
       })
+
       return
     }
 

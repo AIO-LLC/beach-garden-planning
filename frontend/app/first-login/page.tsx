@@ -71,7 +71,9 @@ export default function FirstLoginPage() {
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
+
       console.error(error)
+
       return
     }
 

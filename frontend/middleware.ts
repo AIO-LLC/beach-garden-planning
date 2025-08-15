@@ -1,4 +1,5 @@
 import type { NextFetchEvent } from "next/server"
+
 import { NextResponse, NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 
@@ -22,9 +23,11 @@ const redirectIfIncompletePaths = [
 
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET
+
   if (!secret) {
     throw new Error("JWT_SECRET environment variable is not defined")
   }
+
   return new TextEncoder().encode(secret)
 }
 
@@ -39,9 +42,11 @@ interface JwtClaims {
 async function verifyJwt(token: string): Promise<JwtClaims | null> {
   try {
     const { payload } = await jwtVerify(token, getJwtSecret())
+
     return payload as JwtClaims
   } catch (error) {
     console.error("JWT verification failed:", error)
+
     return null
   }
 }
@@ -58,9 +63,12 @@ export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
   if (!loggedIn) {
     if (authRequiredPaths.some(p => pathname.startsWith(p))) {
       const loginUrl = req.nextUrl.clone()
+
       loginUrl.pathname = "/login"
+
       return NextResponse.redirect(loginUrl)
     }
+
     return NextResponse.next()
   }
 
@@ -69,20 +77,26 @@ export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
     // Logged in & complete profile: redirect certain pages to /planning
     if (redirectIfCompletePaths.some(p => pathname === p)) {
       const planningUrl = req.nextUrl.clone()
+
       planningUrl.pathname = "/planning"
+
       return NextResponse.redirect(planningUrl)
     }
   } else {
     // Logged in & incomplete profile: redirect certain pages to /first-login
     if (redirectIfIncompletePaths.some(p => pathname === p)) {
       const firstLoginUrl = req.nextUrl.clone()
+
       firstLoginUrl.pathname = "/first-login"
+
       return NextResponse.redirect(firstLoginUrl)
     }
     // Also protect planning routes for incomplete profile
     if (profileRequiredPaths.some(p => pathname.startsWith(p))) {
       const firstLoginUrl = req.nextUrl.clone()
+
       firstLoginUrl.pathname = "/first-login"
+
       return NextResponse.redirect(firstLoginUrl)
     }
   }
