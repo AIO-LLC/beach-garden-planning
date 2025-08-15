@@ -192,8 +192,6 @@ export default function PlanningDatePage() {
       addToast({
         title: "Votre réservation a été annulée."
       })
-
-      // REFRESH from server to clear the deleted reservation
       await refreshReservations(date!, setReservations)
     } catch (err: any) {
       console.error(err)
@@ -219,55 +217,76 @@ export default function PlanningDatePage() {
       </div>
 
       <Accordion variant="splitted">
-        {[16, 17, 18, 19, 20].map(hour => (
-          <AccordionItem key={hour} aria-label={`${hour}h`} title={`${hour}h`}>
-            <div>
-              <span>Terrains</span>
-              {[1, 2, 3, 4].map(court => {
-                const res = reservations.find(
-                  r => r.reservation_time === hour && r.court_number === court
-                )
+        {[16, 17, 18, 19, 20].map(hour => {
+          // Calculate available courts for this hour
+          const totalCourts = 4
+          const reservedCourts = reservations.filter(
+            r => r.reservation_time === hour
+          ).length
+          const availableCourts = totalCourts - reservedCourts
+          let subtitleText = `${availableCourts}/${totalCourts} terrains libres`
 
-                return (
-                  <div
-                    key={court}
-                    className="w-full flex justify-between items-center mt-2 ml-2"
-                  >
-                    <span>{court}</span>
-                    {res ? (
-                      <div className="flex items-center gap-2">
-                        {currentUserId === res.member_id ? (
+          if (availableCourts === 1) {
+            subtitleText = `1/${totalCourts} terrain libre`
+          } else if (availableCourts === 0) {
+            subtitleText = `Aucun terrain disponible`
+          }
+
+          return (
+            <AccordionItem
+              key={hour}
+              aria-label={`${hour}h`}
+              subtitle={subtitleText}
+              title={`${hour}h`}
+            >
+              <div>
+                <span>Terrains</span>
+                {[1, 2, 3, 4].map(court => {
+                  const res = reservations.find(
+                    r => r.reservation_time === hour && r.court_number === court
+                  )
+
+                  return (
+                    <div
+                      key={court}
+                      className="w-full flex justify-between items-center mt-2 ml-2"
+                    >
+                      <span>{court}</span>
+                      {res ? (
+                        <div className="flex items-center gap-2">
+                          {currentUserId === res.member_id ? (
+                            <Button
+                              color="danger"
+                              size="sm"
+                              onClick={() => handleCancelReservation(res.id)}
+                            >
+                              Annuler
+                            </Button>
+                          ) : (
+                            <span className="text-gray-500">
+                              Réservé par {res.member_first_name}{" "}
+                              {res.member_last_name}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        !currentUserHasReservation && (
                           <Button
-                            color="danger"
+                            color="primary"
                             size="sm"
-                            onClick={() => handleCancelReservation(res.id)}
+                            onClick={() => handleReservation(hour, court)}
                           >
-                            Annuler
+                            Réserver
                           </Button>
-                        ) : (
-                          <span className="text-gray-500">
-                            Réservé par {res.member_first_name}{" "}
-                            {res.member_last_name}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      !currentUserHasReservation && (
-                        <Button
-                          color="primary"
-                          size="sm"
-                          onClick={() => handleReservation(hour, court)}
-                        >
-                          Réserver
-                        </Button>
-                      )
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </AccordionItem>
-        ))}
+                        )
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </AccordionItem>
+          )
+        })}
       </Accordion>
     </div>
   )
