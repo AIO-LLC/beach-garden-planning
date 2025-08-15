@@ -264,7 +264,7 @@ export default function PlanningDatePage() {
                             </Button>
                           ) : (
                             <span className="text-gray-500">
-                              Réservé par {res.member_first_name}{" "}
+                              Réservé par {res.member_first_name[0]}.{" "}
                               {res.member_last_name}
                             </span>
                           )}
