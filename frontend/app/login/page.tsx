@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import { useState, useEffect } from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
 
@@ -10,6 +10,13 @@ const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function LogInPage() {
+  const [phone, setPhone] = useState<string>("")
+  const [password, setPassword] = useState<string>("")
+
+  const isFormValid = (): boolean => {
+    return phone !== "" && password !== ""
+  }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -62,6 +69,8 @@ export default function LogInPage() {
           name="phone"
           placeholder="Entrez votre numéro de téléphone"
           type="text"
+          value={phone}
+          onValueChange={setPhone}
         />
         <Input
           required
@@ -70,11 +79,13 @@ export default function LogInPage() {
           name="password"
           placeholder="Entrez votre mot de passe"
           type="password"
+          value={password}
+          onValueChange={setPassword}
         />
         <Link className="underline" href="/password-forgotten">
           Mot de passe oublié ?
         </Link>
-        <Button color="primary" type="submit">
+        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
           Se connecter
         </Button>
       </Form>
