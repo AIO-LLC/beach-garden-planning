@@ -21,6 +21,7 @@ type Member = {
 }
 
 export default function AccountPage() {
+  const [originalMember, setOriginalMember] = useState<Member | null>(null)
   const [member, setMember] = useState<Member | null>(null)
 
   const capitalizeWords = (value: string): string => {
@@ -72,6 +73,28 @@ export default function AccountPage() {
     return null
   }
 
+  const isFormValid = (): boolean => {
+    if (!member) return false
+
+    const phoneError = getPhoneError(member.phone)
+    const firstNameError = getFirstNameError(member.first_name)
+    const lastNameError = getLastNameError(member.last_name)
+    const emailError = getEmailError(member.email)
+
+    return !phoneError && !firstNameError && !lastNameError && !emailError
+  }
+
+  const hasValuesChanged = (): boolean => {
+    if (!member || !originalMember) return false
+
+    return (
+      member.phone !== originalMember.phone ||
+      member.first_name !== originalMember.first_name ||
+      member.last_name !== originalMember.last_name ||
+      member.email !== originalMember.email
+    )
+  }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -81,7 +104,7 @@ export default function AccountPage() {
     const emailError: string | null = getEmailError(member.email)
 
     // If any validation errors, don't submit
-    if (phoneError || firstNameError || lastNameError || emailError) {
+    if (!isFormValid) {
       addToast({
         title: "Veuillez corriger les erreurs dans le formulaire.",
         color: "danger"
@@ -136,6 +159,7 @@ export default function AccountPage() {
           title: "Votre compte a été mis à jour.",
           color: "success"
         })
+        setOriginalMember({ ...member })
       }
     } catch (err: any) {
       console.error(err)
@@ -189,6 +213,7 @@ export default function AccountPage() {
 
       getMemberData(id).then(memberData => {
         setMember(memberData)
+        setOriginalMember(memberData)
       })
     })
   }, [])
@@ -263,9 +288,9 @@ export default function AccountPage() {
           placeholder="Entrez votre adresse email"
           type="email"
           value={member.email}
-          onValueChange={(newValue): string => {
+          onValueChange={newValue => {
             setMember(prev => ({
-              ...prev,
+              ...prev!,
               email: newValue
             }))
           }}
@@ -281,7 +306,11 @@ export default function AccountPage() {
         >
           Modifier mon mot de passe
         </Link>
-        <Button color="primary" type="submit">
+        <Button
+          color="primary"
+          type="submit"
+          isDisabled={!isFormValid() || !hasValuesChanged()}
+        >
           Mettre à jour
         </Button>
       </Form>
