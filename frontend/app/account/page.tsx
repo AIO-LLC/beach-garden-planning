@@ -26,7 +26,7 @@ export default function AccountPage() {
   const capitalizeWords = (value: string): string => {
     let result = ""
     let capitalizeNext = true
-    const separators: [string] = [" ", "-", "'", "."]
+    const separators: string[] = [" ", "-", "'", "."]
 
     for (let i = 0; i < value.length; i++) {
       const char = value[i]
@@ -47,8 +47,23 @@ export default function AccountPage() {
     return result
   }
 
+  const getPhoneError = (value: string): string | null => {
+    if (value.length === 0) return "Le numéro de téléphone est requis."
+    return null
+  }
+
+  const getFirstNameError = (value: string): string | null => {
+    if (value.trim().length === 0) return "Le prénom est requis."
+    return null
+  }
+
+  const getLastNameError = (value: string): string | null => {
+    if (value.trim().length === 0) return "Le nom est requis."
+    return null
+  }
+
   const getEmailError = (value: string): string | null => {
-    if (value.length === 0) return null
+    if (value.length === 0) return "L'adresse email est requise."
 
     if (!EmailValidator.validate(value)) {
       return "L'adresse email est invalide."
@@ -59,6 +74,20 @@ export default function AccountPage() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+
+    const phoneError: string | null = getPhoneError(member.phone)
+    const firstNameError: string | null = getFirstNameError(member.first_name)
+    const lastNameError: string | null = getLastNameError(member.last_name)
+    const emailError: string | null = getEmailError(member.email)
+
+    // If any validation errors, don't submit
+    if (phoneError || firstNameError || lastNameError || emailError) {
+      addToast({
+        title: "Veuillez corriger les erreurs dans le formulaire.",
+        color: "danger"
+      })
+      return
+    }
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
@@ -78,7 +107,6 @@ export default function AccountPage() {
         title: "Une erreur est survenue. Veuillez réessayer plus tard.",
         color: "danger"
       })
-
       return
     }
 
@@ -139,7 +167,7 @@ export default function AccountPage() {
       return await getJwtClaimsResponse.json()
     }
 
-    const getMemberData = async (id): Member | null => {
+    const getMemberData = async (id: string): Promise<Member | null> => {
       const response = await fetch(`${API_HOST}:${API_PORT}/member/${id}`, {
         method: "GET",
         credentials: "include"
@@ -179,42 +207,49 @@ export default function AccountPage() {
         onSubmit={onSubmit}
       >
         <Input
-          required
+          errorMessage={getPhoneError(member.phone)}
+          isInvalid={getPhoneError(member.phone) !== null}
           label="Numéro de téléphone"
           labelPlacement="outside"
           name="phone"
           placeholder="Entrez votre numéro de téléphone"
           type="text"
           value={member.phone}
-          onValueChange={(newValue): string => {
+          onValueChange={newValue => {
             setMember(prev => ({
-              ...prev,
+              ...prev!,
               phone: newValue
             }))
           }}
         />
+
         <Input
+          errorMessage={getFirstNameError(member.first_name)}
+          isInvalid={getFirstNameError(member.first_name) !== null}
           label="Prénom"
           labelPlacement="outside"
           name="first_name"
           placeholder="Entrez votre prénom"
           value={member.first_name}
-          onValueChange={(newValue): string => {
+          onValueChange={newValue => {
             setMember(prev => ({
-              ...prev,
+              ...prev!,
               first_name: capitalizeWords(newValue)
             }))
           }}
         />
+
         <Input
+          errorMessage={getLastNameError(member.last_name)}
+          isInvalid={getLastNameError(member.last_name) !== null}
           label="Nom"
           labelPlacement="outside"
           name="last_name"
           placeholder="Entrez votre nom de famille"
           value={member.last_name}
-          onValueChange={(newValue): string => {
+          onValueChange={newValue => {
             setMember(prev => ({
-              ...prev,
+              ...prev!,
               last_name: capitalizeWords(newValue)
             }))
           }}
