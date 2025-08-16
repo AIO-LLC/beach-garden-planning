@@ -15,14 +15,11 @@ import {
 } from "@heroui/react"
 import NextLink from "next/link"
 import NextImage from "next/image"
-import { useRouter } from "next/navigation"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export const Navbar = () => {
-  const router = useRouter()
-
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   // On mount, check JWT
@@ -45,7 +42,7 @@ export const Navbar = () => {
   }, [])
 
   const handleAccountSettings = () => {
-    router.push("/account")
+    location.replace("/account")
   }
 
   const handleLogout = async () => {

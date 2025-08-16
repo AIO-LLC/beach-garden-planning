@@ -1,5 +1,4 @@
 "use client"
-import { useRouter } from "next/navigation"
 
 function getNextTuesdayOrThursday(): string {
   const today = new Date()
@@ -27,7 +26,6 @@ function getNextTuesdayOrThursday(): string {
 }
 
 export default function PlanningPage() {
-  const router = useRouter()
   const defaultDate = getNextTuesdayOrThursday()
-  router.push(`/planning/${defaultDate}`)
+  location.replace(`/planning/${defaultDate}`)
 }
