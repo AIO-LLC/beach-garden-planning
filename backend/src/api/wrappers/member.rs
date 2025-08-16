@@ -134,7 +134,7 @@ pub async fn update_member(
     };
 
     let client = state.pool.get().await?;
-    let affected = member::update_member_with_password(
+    let affected = member::update_member(
         &client,
         &models::Member {
             id: payload.id,
