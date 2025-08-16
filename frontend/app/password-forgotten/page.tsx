@@ -64,7 +64,7 @@ export default function PasswordForgottenPage() {
   }
 
   return (
-    <div>
+    <div className="mx-11">
       <h1 className="font-bold text-xl my-4">Mot de passe oublié</h1>
       <p className="mb-5">
         Veuillez entrer l'adresse email lié à votre compte afin de recevoir un
@@ -83,7 +83,7 @@ export default function PasswordForgottenPage() {
           value={email}
           onValueChange={setEmail}
         />
-        <div className="w-full flex justify-between">
+        <div className="w-full flex justify-between mt-4">
           <Button onClick={() => location.replace("/login")}>Retour</Button>
           <Button color="primary" type="submit" isDisabled={!isFormValid()}>
             Confirmer

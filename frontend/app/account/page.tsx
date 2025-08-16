@@ -301,13 +301,14 @@ export default function AccountPage() {
             buttonStyles({
               color: "default",
               radius: "md"
-            }) + " w-full my-4"
+            }) + " w-full mt-4"
           }
           href="/edit-password"
         >
           Modifier mon mot de passe
         </Link>
-        <div className="w-full flex justify-between">
+
+        <div className="w-full flex justify-between mt-4">
           <Button onClick={() => location.replace("/planning")}>Retour</Button>
           <Button
             color="primary"

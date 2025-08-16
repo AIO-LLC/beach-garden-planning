@@ -165,9 +165,12 @@ export default function EditPasswordPage() {
           onValueChange={setNewPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
-          Mettre à jour
-        </Button>
+        <div className="w-full flex justify-between mt-4">
+          <Button onClick={() => location.replace("/account")}>Retour</Button>
+          <Button color="primary" type="submit" isDisabled={!isFormValid()}>
+            Mettre à jour
+          </Button>
+        </div>
       </Form>
     </div>
   )

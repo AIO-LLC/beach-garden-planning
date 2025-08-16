@@ -139,7 +139,12 @@ export default function PasswordResetPage() {
           onValueChange={setNewPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
+        <Button
+          className="mt-4"
+          color="primary"
+          type="submit"
+          isDisabled={!isFormValid()}
+        >
           Réinitialiser
         </Button>
       </Form>
