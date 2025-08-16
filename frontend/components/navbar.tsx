@@ -1,5 +1,7 @@
 "use client"
 
+import { LuUser } from "react-icons/lu"
+import { IoIosLogOut } from "react-icons/io"
 import { useState, useEffect } from "react"
 import { Navbar as HeroUINavbar } from "@heroui/navbar"
 import {
@@ -8,7 +10,8 @@ import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownItem
+  DropdownItem,
+  DropdownSection
 } from "@heroui/react"
 import NextLink from "next/link"
 import NextImage from "next/image"
@@ -73,10 +76,21 @@ export const Navbar = () => {
               <Button color="primary">Mon compte</Button>
             </DropdownTrigger>
             <DropdownMenu aria-label="Profil Actions">
-              <DropdownItem key="settings" onClick={handleAccountSettings}>
-                Paramètres du compte
-              </DropdownItem>
-              <DropdownItem key="logout" onClick={handleLogout}>
+              <DropdownSection showDivider>
+                <DropdownItem
+                  key="settings"
+                  onClick={handleAccountSettings}
+                  startContent={<LuUser />}
+                >
+                  Paramètres du compte
+                </DropdownItem>
+              </DropdownSection>
+              <DropdownItem
+                key="logout"
+                className="text-danger"
+                onClick={handleLogout}
+                startContent={<IoIosLogOut />}
+              >
                 Déconnexion
               </DropdownItem>
             </DropdownMenu>
