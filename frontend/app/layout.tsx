@@ -45,7 +45,7 @@ export default function RootLayout({
             <Navbar />
             <main className="container max-w-8xl flex-grow">
               <section className="flex flex-col items-center justify-center gap-4">
-                <div className="inline-block min-w-xs max-w-lg text-center justify-center">
+                <div className="inline-block min-w-xs max-w-lg text-center justify-center pb-6">
                   {children}
                 </div>
               </section>
