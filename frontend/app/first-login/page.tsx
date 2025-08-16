@@ -41,6 +41,16 @@ export default function FirstLoginPage() {
     return result
   }
 
+  const getFirstNameError = (value: string): string | null => {
+    if (value.trim().length === 0) return "Le prénom est requis."
+    return null
+  }
+
+  const getLastNameError = (value: string): string | null => {
+    if (value.trim().length === 0) return "Le nom est requis."
+    return null
+  }
+
   const getEmailError = (value: string): string | null => {
     if (value.length === 0) return null
 
@@ -81,6 +91,23 @@ export default function FirstLoginPage() {
     }
 
     return null
+  }
+
+  const isFormValid = (): boolean => {
+    const firstNameError = getFirstNameError(firstName)
+    const lastNameError = getLastNameError(lastName)
+    const emailError = getEmailError(email)
+    const passwordError = getPasswordError(password)
+    const passwordConfirmationError =
+      getPasswordConfirmationError(passwordConfirmation)
+
+    return (
+      !firstNameError &&
+      !lastNameError &&
+      !emailError &&
+      !passwordError &&
+      !passwordConfirmationError
+    )
   }
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -218,7 +245,7 @@ export default function FirstLoginPage() {
           onValueChange={setPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit">
+        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
           Confirmer
         </Button>
       </Form>
