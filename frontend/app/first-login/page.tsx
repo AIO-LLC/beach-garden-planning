@@ -10,9 +10,36 @@ const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function FirstLoginPage() {
-  const [email, setEmail] = React.useState("")
-  const [password, setPassword] = React.useState("")
-  const [passwordConfirmation, setPasswordConfirmation] = React.useState("")
+  const [firstName, setFirstName] = React.useState<string>("")
+  const [lastName, setLastName] = React.useState<string>("")
+  const [email, setEmail] = React.useState<string>("")
+  const [password, setPassword] = React.useState<string>("")
+  const [passwordConfirmation, setPasswordConfirmation] =
+    React.useState<string>("")
+
+  const capitalizeWords = (value: string): string => {
+    let result = ""
+    let capitalizeNext = true
+    const separators: [string] = [" ", "-", "'", "."]
+
+    for (let i = 0; i < value.length; i++) {
+      const char = value[i]
+
+      if (separators.includes(char)) {
+        result += char
+        capitalizeNext = true
+      } else {
+        if (capitalizeNext) {
+          result += char.toUpperCase()
+          capitalizeNext = false
+        } else {
+          result += char.toLowerCase()
+        }
+      }
+    }
+
+    return result
+  }
 
   const getEmailError = (value: string): string | null => {
     if (value.length === 0) return null
@@ -88,6 +115,8 @@ export default function FirstLoginPage() {
       ...rest
     }
 
+    console.log(payload)
+
     try {
       const url = `${API_HOST}:${API_PORT}/member-with-password`
       const response = await fetch(url, {
@@ -137,13 +166,18 @@ export default function FirstLoginPage() {
           labelPlacement="outside"
           name="first_name"
           placeholder="Entrez votre prénom"
+          value={firstName}
+          onValueChange={value => setFirstName(capitalizeWords(value))}
         />
+
         <Input
           isRequired
           label="Nom"
           labelPlacement="outside"
           name="last_name"
           placeholder="Entrez votre nom de famille"
+          value={lastName}
+          onValueChange={value => setLastName(capitalizeWords(value))}
         />
         <Input
           isRequired

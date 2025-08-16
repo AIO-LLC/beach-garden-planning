@@ -23,6 +23,30 @@ type Member = {
 export default function AccountPage() {
   const [member, setMember] = useState<Member | null>(null)
 
+  const capitalizeWords = (value: string): string => {
+    let result = ""
+    let capitalizeNext = true
+    const separators: [string] = [" ", "-", "'", "."]
+
+    for (let i = 0; i < value.length; i++) {
+      const char = value[i]
+
+      if (separators.includes(char)) {
+        result += char
+        capitalizeNext = true
+      } else {
+        if (capitalizeNext) {
+          result += char.toUpperCase()
+          capitalizeNext = false
+        } else {
+          result += char.toLowerCase()
+        }
+      }
+    }
+
+    return result
+  }
+
   const getEmailError = (value: string): string | null => {
     if (value.length === 0) return null
 
@@ -178,7 +202,7 @@ export default function AccountPage() {
           onValueChange={(newValue): string => {
             setMember(prev => ({
               ...prev,
-              first_name: newValue
+              first_name: capitalizeWords(newValue)
             }))
           }}
         />
@@ -191,7 +215,7 @@ export default function AccountPage() {
           onValueChange={(newValue): string => {
             setMember(prev => ({
               ...prev,
-              last_name: newValue
+              last_name: capitalizeWords(newValue)
             }))
           }}
         />
