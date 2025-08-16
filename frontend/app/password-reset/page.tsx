@@ -72,7 +72,8 @@ export default function PasswordResetPage() {
           addToast({
             title:
               'Le lien de réinitialisation du mot de passe est invalide ou a expiré. Veuillez retourner sur la page "Mot de passe oublié".',
-            color: "danger"
+            color: "danger",
+            timeout: "9999"
           })
           break
 
