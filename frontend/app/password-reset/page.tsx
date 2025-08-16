@@ -110,7 +110,7 @@ export default function PasswordResetPage() {
 
   return (
     <div>
-      <h1 className={title()}>Réinitialiser mon mot de passe</h1>
+      <h1 className="font-bold text-xl my-4">Réinitialiser mon mot de passe</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           isRequired

@@ -206,7 +206,7 @@ export default function PlanningDatePage() {
 
   return (
     <div>
-      <h1 className={title()}>Planning</h1>
+      <h1 className="font-bold text-xl my-4">Planning</h1>
       <p className="italic text-sm">
         Une seule réservation d’un terrain pour un créneau d’1h est possible par
         jour et au nom d’une seule personne.

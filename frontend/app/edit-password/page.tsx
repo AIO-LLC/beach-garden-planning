@@ -126,7 +126,7 @@ export default function EditPasswordPage() {
 
   return (
     <div>
-      <h1 className={title()}>Modifier mon mot de passe</h1>
+      <h1 className="font-bold text-xl my-4">Modifier mon mot de passe</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           isRequired

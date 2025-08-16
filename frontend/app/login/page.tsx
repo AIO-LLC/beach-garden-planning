@@ -60,7 +60,7 @@ export default function LogInPage() {
 
   return (
     <div>
-      <h1 className={title()}>Se connecter</h1>
+      <h1 className="font-bold text-xl my-5">Se connecter</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           required

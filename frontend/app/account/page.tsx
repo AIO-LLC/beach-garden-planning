@@ -224,7 +224,7 @@ export default function AccountPage() {
 
   return (
     <div>
-      <h1 className={title()}>Mon compte</h1>
+      <h1 className="font-bold text-xl my-4">Mon compte</h1>
       <Form
         className="gap-4"
         encType="multipart/form-data"

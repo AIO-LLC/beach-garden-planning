@@ -185,7 +185,7 @@ export default function FirstLoginPage() {
 
   return (
     <div>
-      <h1 className={title()}>Finalisez votre inscription</h1>
+      <h1 className="font-bold text-xl my-4">Finalisez votre inscription</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <Input
           isRequired
