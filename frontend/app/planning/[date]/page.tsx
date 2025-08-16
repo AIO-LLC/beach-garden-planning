@@ -1,11 +1,9 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
-
 import { title } from "@/components/primitives"
 
 type Reservation = {
@@ -21,28 +19,64 @@ type Reservation = {
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
+function getAvailableDates(): { tuesday: string; thursday: string } {
+  const today = new Date()
+  const dow = today.getDay()
+  let nextTue: Date, nextThu: Date
+
+  if (dow === 2) {
+    nextTue = new Date(today)
+    nextThu = new Date(today)
+    nextThu.setDate(today.getDate() + 2)
+  } else if (dow === 4) {
+    nextTue = new Date(today)
+    nextTue.setDate(today.getDate() + 5)
+    nextThu = new Date(today)
+  } else {
+    let delta = (2 - dow + 7) % 7
+    if (delta === 0) delta = 7
+    nextTue = new Date(today)
+    nextTue.setDate(today.getDate() + delta)
+    nextThu = new Date(nextTue)
+    nextThu.setDate(nextTue.getDate() + 2)
+  }
+
+  return {
+    tuesday: nextTue.toISOString().split("T")[0],
+    thursday: nextThu.toISOString().split("T")[0]
+  }
+}
+
+function isValidPlanningDate(d: string): boolean {
+  const { tuesday, thursday } = getAvailableDates()
+  return d === tuesday || d === thursday
+}
+
+function getDefaultDate(): string {
+  const today = new Date()
+  const dow = today.getDay()
+  if (dow === 2 || dow === 4) {
+    return today.toISOString().split("T")[0]
+  }
+  return getAvailableDates().tuesday
+}
+
 export default function PlanningDatePage() {
   const router = useRouter()
   const { date } = useParams() as { date?: string }
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
-  const [error, setError] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserHasReservation, setCurrentUserHasReservation] =
-    useState<boolean>(false)
+    useState(false)
 
   useEffect(() => {
-    if (!date) return setError(true)
-
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-
-    if (!dateRegex.test(date)) return setError(true)
-
-    const [year, month, day] = date.split("-").map(Number)
-    const dt = new Date(year, month - 1, day)
-
-    if (dt.toISOString().split("T")[0] !== date) return setError(true)
-
+    if (!date || !isValidPlanningDate(date)) {
+      router.push(`/planning/${getDefaultDate()}`)
+      return
+    }
+    const [y, m, d] = date.split("-").map(Number)
+    const dt = new Date(y, m - 1, d)
     setDisplayDate(
       dt.toLocaleDateString("fr-FR", {
         weekday: "long",
@@ -51,158 +85,48 @@ export default function PlanningDatePage() {
       })
     )
 
-    const getCurrentUser = async () => {
+    async function fetchData() {
       try {
-        const response = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+        const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
           method: "GET",
           credentials: "include"
         })
-
-        if (response.ok) {
-          const { id } = await response.json()
-
+        if (res.ok) {
+          const { id } = await res.json()
           setCurrentUserId(id)
         }
-      } catch (err) {
-        console.error("Error getting current user:", err)
-      }
-    }
+      } catch {}
 
-    const get_reservations_from_date = async (date: string) => {
       try {
-        const url = `${API_HOST}:${API_PORT}/reservations/${date}`
-        const response = await fetch(url, {
-          method: "get",
-          credentials: "include"
-        })
-
-        if (!response.ok) {
-          console.log(response.status)
-
-          return []
+        const res2 = await fetch(
+          `${API_HOST}:${API_PORT}/reservations/${date}`,
+          { method: "GET", credentials: "include" }
+        )
+        if (res2.ok) {
+          setReservations(await res2.json())
         }
-
-        const reservations_from_db: Reservation[] = await response.json()
-
-        return reservations_from_db
-      } catch (err: any) {
-        console.error(err)
-
-        return []
-      }
+      } catch {}
     }
 
-    Promise.all([getCurrentUser(), get_reservations_from_date(date)]).then(
-      ([_, reservationsData]) => {
-        setReservations(reservationsData || [])
-      }
-    )
-  }, [date])
+    fetchData()
+  }, [date, router])
 
-  // Update currentUserHasReservation whenever reservations or currentUserId changes
   useEffect(() => {
-    if (currentUserId) {
-      setCurrentUserHasReservation(
+    setCurrentUserHasReservation(
+      currentUserId != null &&
         reservations.some(r => r.member_id === currentUserId)
-      )
-    } else {
-      setCurrentUserHasReservation(false)
-    }
+    )
   }, [reservations, currentUserId])
 
-  if (error) notFound()
+  const { tuesday, thursday } = getAvailableDates()
+  const isFirst = date === tuesday
+  const isSecond = date === thursday
 
-  const navDay = (offset: number) => {
-    const dt = new Date(date!)
-
-    dt.setDate(dt.getDate() + offset)
-    const newDate = dt.toISOString().split("T")[0]
-
-    router.push(`/planning/${newDate}`)
+  async function navTo(target: string) {
+    router.push(`/planning/${target}`)
   }
 
-  async function refreshReservations(
-    date: string,
-    setReservations: React.Dispatch<React.SetStateAction<Reservation[]>>
-  ) {
-    try {
-      const url = `${API_HOST}:${API_PORT}/reservations/${date}`
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include"
-      })
-
-      if (!response.ok) throw new Error(`Fetch failed ${response.status}`)
-      const data: Reservation[] = await response.json()
-
-      setReservations(data)
-    } catch (err) {
-      console.error("Error refreshing reservations:", err)
-    }
-  }
-
-  const handleReservation = async (hour: number, court: number) => {
-    if (!currentUserId) return
-
-    const payload = {
-      id: "",
-      member_id: currentUserId,
-      court_number: court,
-      reservation_date: date,
-      reservation_time: hour
-    }
-
-    try {
-      const response = await fetch(`${API_HOST}:${API_PORT}/reservation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) throw new Error(`Erreur ${response.status}`)
-
-      addToast({
-        title: "Votre réservation a été enregistrée.",
-        color: "success"
-      })
-
-      await refreshReservations(date!, setReservations)
-    } catch (err: any) {
-      console.error(err)
-      addToast({
-        title:
-          "Une erreur est survenue lors de la réservation. Veuillez réessayer plus tard.",
-        color: "danger"
-      })
-    }
-  }
-
-  const handleCancelReservation = async (reservationId: string) => {
-    try {
-      const response = await fetch(
-        `${API_HOST}:${API_PORT}/reservation/${reservationId}`,
-        {
-          method: "DELETE",
-          credentials: "include"
-        }
-      )
-
-      if (!response.ok) throw new Error(`Erreur ${response.status}`)
-
-      addToast({
-        title: "Votre réservation a été annulée."
-      })
-      await refreshReservations(date!, setReservations)
-    } catch (err: any) {
-      console.error(err)
-      addToast({
-        title:
-          "Une erreur est survenue lors de l'annulation de votre réservation. Veuillez réessayer plus tard.",
-        color: "danger"
-      })
-    }
-  }
+  if (!displayDate) return null
 
   return (
     <div>
@@ -211,38 +135,49 @@ export default function PlanningDatePage() {
         Une seule réservation d’un terrain pour un créneau d’1h est possible par
         jour et au nom d’une seule personne.
       </p>
+      <p className="italic text-sm mt-2">
+        Les réservations ne sont disponibles que les mardis et jeudis.
+      </p>
+
       <div className="flex justify-center items-center gap-4 my-4">
-        <Button color="primary" size="sm" onClick={() => navDay(-1)}>
+        <Button
+          color="primary"
+          size="sm"
+          onClick={() => navTo(tuesday)}
+          isDisabled={isFirst}
+        >
           <IoIosArrowBack />
         </Button>
+
         <span className="font-semibold">{displayDate}</span>
-        <Button color="primary" size="sm" onClick={() => navDay(1)}>
+
+        <Button
+          color="primary"
+          size="sm"
+          onClick={() => navTo(thursday)}
+          isDisabled={isSecond}
+        >
           <IoIosArrowForward />
         </Button>
       </div>
 
       <Accordion variant="splitted">
         {[16, 17, 18, 19, 20].map(hour => {
-          // Calculate available courts for this hour
-          const totalCourts = 4
-          const reservedCourts = reservations.filter(
+          const total = 4
+          const used = reservations.filter(
             r => r.reservation_time === hour
           ).length
-          const availableCourts = totalCourts - reservedCourts
-          let subtitleText = `${availableCourts}/${totalCourts} terrains libres`
-
-          if (availableCourts === 1) {
-            subtitleText = `1/${totalCourts} terrain libre`
-          } else if (availableCourts === 0) {
-            subtitleText = `Aucun terrain disponible`
-          }
+          const free = total - used
+          let subtitle = `${free}/${total} terrains libres`
+          if (free === 1) subtitle = `1/${total} terrain libre`
+          if (free === 0) subtitle = "Aucun terrain disponible"
 
           return (
             <AccordionItem
               key={hour}
               aria-label={`${hour}h`}
-              subtitle={subtitleText}
               title={`${hour}h`}
+              subtitle={subtitle}
             >
               <div>
                 <span>Terrains</span>
@@ -257,13 +192,35 @@ export default function PlanningDatePage() {
                       className="w-full flex justify-between items-center mt-2 ml-2"
                     >
                       <span>{court}</span>
+
                       {res ? (
                         <div className="flex items-center gap-2">
                           {currentUserId === res.member_id ? (
                             <Button
                               color="danger"
                               size="sm"
-                              onClick={() => handleCancelReservation(res.id)}
+                              onClick={async () => {
+                                await fetch(
+                                  `${API_HOST}:${API_PORT}/reservation/${
+                                    res.id
+                                  }`,
+                                  {
+                                    method: "DELETE",
+                                    credentials: "include"
+                                  }
+                                )
+                                addToast({
+                                  title: "Votre réservation a été annulée."
+                                })
+                                const refreshed = await (
+                                  await fetch(
+                                    `${API_HOST}:${API_PORT}/reservations/${date}`,
+                                    { credentials: "include" }
+                                  )
+                                ).json()
+                                setReservations(refreshed)
+                              }}
+                              isDisabled={false}
                             >
                               Annuler
                             </Button>
@@ -279,7 +236,37 @@ export default function PlanningDatePage() {
                           <Button
                             color="primary"
                             size="sm"
-                            onClick={() => handleReservation(hour, court)}
+                            onClick={async () => {
+                              await fetch(
+                                `${API_HOST}:${API_PORT}/reservation`,
+                                {
+                                  method: "POST",
+                                  credentials: "include",
+                                  headers: {
+                                    "Content-Type": "application/json"
+                                  },
+                                  body: JSON.stringify({
+                                    id: "",
+                                    member_id: currentUserId,
+                                    court_number: court,
+                                    reservation_date: date,
+                                    reservation_time: hour
+                                  })
+                                }
+                              )
+                              addToast({
+                                title: "Votre réservation a été enregistrée.",
+                                color: "success"
+                              })
+                              const refreshed = await (
+                                await fetch(
+                                  `${API_HOST}:${API_PORT}/reservations/${date}`,
+                                  { credentials: "include" }
+                                )
+                              ).json()
+                              setReservations(refreshed)
+                            }}
+                            isDisabled={false}
                           >
                             Réserver
                           </Button>
