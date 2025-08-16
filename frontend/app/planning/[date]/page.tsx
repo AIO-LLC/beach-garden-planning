@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
+import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 
 import { title } from "@/components/primitives"
 
@@ -206,13 +207,17 @@ export default function PlanningDatePage() {
   return (
     <div>
       <h1 className={title()}>Planning</h1>
-      <div className="flex items-center gap-4 my-4">
+      <p className="italic text-sm">
+        Une seule réservation d’un terrain pour un créneau d’1h est possible par
+        jour et au nom d’une seule personne.
+      </p>
+      <div className="flex justify-center items-center gap-4 my-4">
         <Button color="primary" size="sm" onClick={() => navDay(-1)}>
-          {"<"}
+          <IoIosArrowBack />
         </Button>
         <span className="font-semibold">{displayDate}</span>
         <Button color="primary" size="sm" onClick={() => navDay(1)}>
-          {">"}
+          <IoIosArrowForward />
         </Button>
       </div>
 
