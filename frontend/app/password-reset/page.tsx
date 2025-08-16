@@ -50,6 +50,20 @@ export default function PasswordResetPage() {
     return null
   }
 
+  const isFormValid = (): boolean => {
+    const newPasswordError = getPasswordError(newPassword)
+    const newPasswordConfirmationError = getPasswordConfirmationError(
+      newPasswordConfirmation
+    )
+
+    return (
+      !newPasswordError &&
+      !newPasswordConfirmationError &&
+      newPassword !== "" &&
+      newPasswordConfirmation !== ""
+    )
+  }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -125,7 +139,7 @@ export default function PasswordResetPage() {
           onValueChange={setNewPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit">
+        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
           Réinitialiser
         </Button>
       </Form>

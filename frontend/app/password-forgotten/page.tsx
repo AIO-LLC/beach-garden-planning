@@ -22,6 +22,12 @@ export default function PasswordForgottenPage() {
     return null
   }
 
+  const isFormValid = (): boolean => {
+    const emailError = getEmailError(email)
+
+    return !emailError && email !== ""
+  }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -77,7 +83,7 @@ export default function PasswordForgottenPage() {
           value={email}
           onValueChange={setEmail}
         />
-        <Button color="primary" type="submit">
+        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
           Confirmer
         </Button>
       </Form>

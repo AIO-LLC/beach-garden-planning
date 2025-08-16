@@ -46,6 +46,20 @@ export default function EditPasswordPage() {
     return null
   }
 
+  const isFormValid = (): boolean => {
+    const newPasswordError = getPasswordError(newPassword)
+    const newPasswordConfirmationError = getPasswordConfirmationError(
+      newPasswordConfirmation
+    )
+
+    return (
+      password !== "" &&
+      newPassword !== "" &&
+      newPasswordConfirmation !== "" &&
+      !newPasswordError &&
+      !newPasswordConfirmationError
+    )
+  }
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -151,7 +165,7 @@ export default function EditPasswordPage() {
           onValueChange={setNewPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit">
+        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
           Mettre à jour
         </Button>
       </Form>
