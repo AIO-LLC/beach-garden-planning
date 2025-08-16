@@ -83,9 +83,12 @@ export default function PasswordForgottenPage() {
           value={email}
           onValueChange={setEmail}
         />
-        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
-          Confirmer
-        </Button>
+        <div className="w-full flex justify-between">
+          <Button onClick={() => location.replace("/login")}>Retour</Button>
+          <Button color="primary" type="submit" isDisabled={!isFormValid()}>
+            Confirmer
+          </Button>
+        </div>
       </Form>
     </div>
   )

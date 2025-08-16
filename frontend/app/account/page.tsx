@@ -307,13 +307,16 @@ export default function AccountPage() {
         >
           Modifier mon mot de passe
         </Link>
-        <Button
-          color="primary"
-          type="submit"
-          isDisabled={!isFormValid() || !hasValuesChanged()}
-        >
-          Mettre à jour
-        </Button>
+        <div className="w-full flex justify-between">
+          <Button onClick={() => location.replace("/planning")}>Retour</Button>
+          <Button
+            color="primary"
+            type="submit"
+            isDisabled={!isFormValid() || !hasValuesChanged()}
+          >
+            Mettre à jour
+          </Button>
+        </div>
       </Form>
     </div>
   )
