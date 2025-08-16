@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
@@ -63,7 +63,6 @@ function getDefaultDate(): string {
 }
 
 export default function PlanningDatePage() {
-  const router = useRouter()
   const { date } = useParams() as { date?: string }
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
@@ -73,7 +72,7 @@ export default function PlanningDatePage() {
 
   useEffect(() => {
     if (!date || !isValidPlanningDate(date)) {
-      router.push(`/planning/${getDefaultDate()}`)
+      location.replace(`/planning/${getDefaultDate()}`)
       return
     }
     const [y, m, d] = date.split("-").map(Number)
@@ -110,7 +109,7 @@ export default function PlanningDatePage() {
     }
 
     fetchData()
-  }, [date, router])
+  }, [date])
 
   useEffect(() => {
     setCurrentUserHasReservation(
@@ -124,7 +123,7 @@ export default function PlanningDatePage() {
   const isSecond = date === thursday
 
   async function navTo(target: string) {
-    router.push(`/planning/${target}`)
+    location.replace(`/planning/${target}`)
   }
 
   if (!displayDate) return null
@@ -241,7 +240,7 @@ export default function PlanningDatePage() {
                             </Button>
                           ) : (
                             <span className="text-gray-500">
-                              Réservé par {res.member_first_name[0]}.{" "}
+                              Réservé par {res.member_first_name}{" "}
                               {res.member_last_name}
                             </span>
                           )}
