@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
@@ -161,6 +162,24 @@ export default function PlanningDatePage() {
         </Button>
       </div>
 
+      <div className="mb-4 text-center">
+        {(() => {
+          const currentReservation = reservations.find(
+            r => r.member_id === currentUserId
+          )
+          if (currentReservation) {
+            return (
+              <span className="text-green-600">
+                Vous avez réservé le{" "}
+                <b>terrain {currentReservation.court_number}</b> à{" "}
+                <b>{currentReservation.reservation_time}h</b>.
+              </span>
+            )
+          }
+          return <span>Vous n'avez aucune réservation pour ce jour.</span>
+        })()}
+      </div>
+
       <Accordion variant="splitted">
         {[16, 17, 18, 19, 20].map(hour => {
           const total = 4
@@ -185,14 +204,12 @@ export default function PlanningDatePage() {
                   const res = reservations.find(
                     r => r.reservation_time === hour && r.court_number === court
                   )
-
                   return (
                     <div
                       key={court}
                       className="w-full flex justify-between items-center mt-2 ml-2"
                     >
                       <span>{court}</span>
-
                       {res ? (
                         <div className="flex items-center gap-2">
                           {currentUserId === res.member_id ? (
@@ -201,9 +218,7 @@ export default function PlanningDatePage() {
                               size="sm"
                               onClick={async () => {
                                 await fetch(
-                                  `${API_HOST}:${API_PORT}/reservation/${
-                                    res.id
-                                  }`,
+                                  `${API_HOST}:${API_PORT}/reservation/${res.id}`,
                                   {
                                     method: "DELETE",
                                     credentials: "include"
