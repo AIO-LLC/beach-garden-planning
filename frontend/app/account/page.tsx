@@ -239,6 +239,7 @@ export default function AccountPage() {
           name="phone"
           placeholder="Entrez votre numéro de téléphone"
           type="text"
+          startContent="+"
           value={member.phone}
           onValueChange={newValue => {
             setMember(prev => ({

@@ -69,6 +69,7 @@ export default function LogInPage() {
           name="phone"
           placeholder="Entrez votre numéro de téléphone"
           type="text"
+          startContent="+"
           value={phone}
           onValueChange={setPhone}
         />
