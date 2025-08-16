@@ -66,7 +66,7 @@ export default function PasswordForgottenPage() {
   return (
     <div>
       <h1 className="font-bold text-xl my-4">Mot de passe oublié</h1>
-      <p>
+      <p className="mb-5">
         Veuillez entrer l'adresse email lié à votre compte afin de recevoir un
         lien pour réinitialiser votre mot de passe.
       </p>
