@@ -1,7 +1,6 @@
 "use client"
 
-import { LuUser } from "react-icons/lu"
-import { IoIosLogOut } from "react-icons/io"
+import { LuUser, LuShield, LuLogOut } from "react-icons/lu"
 import { useState, useEffect } from "react"
 import { Navbar as HeroUINavbar } from "@heroui/navbar"
 import {
@@ -20,26 +19,33 @@ const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [isAdmin, setIsAdmin] = useState<boolean>(false)
 
-  // On mount, check JWT
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+        const getJwtClaimsResponse = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
           method: "GET",
           credentials: "include"
         })
 
-        if (res.ok) {
+        if (getJwtClaimsResponse.ok) {
+          const claims = await getJwtClaimsResponse.json()
+          setIsAdmin(claims.is_admin)
           setIsLoggedIn(true)
         }
-      } catch {
+      } catch (err) {
+        console.error(err)
         setIsLoggedIn(false)
       }
     }
     checkAuth()
   }, [])
+
+  const handleAdminPanel = () => {
+    location.replace("/admin-panel")
+  }
 
   const handleAccountSettings = () => {
     location.replace("/account")
@@ -74,6 +80,15 @@ export const Navbar = () => {
             </DropdownTrigger>
             <DropdownMenu aria-label="Profil Actions">
               <DropdownSection showDivider>
+                {isAdmin && (
+                  <DropdownItem
+                    key="admin-panel"
+                    onClick={handleAdminPanel}
+                    startContent={<LuShield />}
+                  >
+                    Administration
+                  </DropdownItem>
+                )}
                 <DropdownItem
                   key="settings"
                   onClick={handleAccountSettings}
@@ -86,7 +101,7 @@ export const Navbar = () => {
                 key="logout"
                 className="text-danger"
                 onClick={handleLogout}
-                startContent={<IoIosLogOut />}
+                startContent={<LuLogOut />}
               >
                 Déconnexion
               </DropdownItem>
