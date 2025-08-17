@@ -75,14 +75,14 @@ export default function AdminPanelPage() {
         setIsFormValid(false)
         const error = await res.json()
         console.error(error)
-        addToast({ title: "Erreur réseau", status: "danger" })
+        addToast({ title: "Une erreur est survenue. Veuillez réessayer plus tard.", color: "danger" })
         return
       }
 
       onCloseFn()
       setIsFormValid(false)
       setFormState({ phone: "", phoneError: "", isPhoneInvalid: false })
-      addToast({ title: "Membre ajouté", status: "success" })
+      addToast({ title: "Membre ajouté !", color: "success" })
     } finally {
       setIsLoading(false)
     }
