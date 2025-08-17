@@ -28,7 +28,7 @@ export default function AdminPanelPage() {
     return ""
   }
 
-  const onSubmit = onCloseFn => {
+  const onSubmit = async onCloseFn => {
     const phoneError = getPhoneError(formState.phone)
     const isPhoneInvalid = phoneError !== ""
 
@@ -38,14 +38,49 @@ export default function AdminPanelPage() {
       isPhoneInvalid
     }))
 
-    if (!isPhoneInvalid) {
-      onCloseFn()
-      setFormState(prev => ({
-        phone: "",
-        phoneError: "",
-        isPhoneInvalid: false
-      }))
+    if (isPhoneInvalid) return
+
+    const addMemberPayload = {
+      id: "",
+      phone: formState.phone,
+      password: "",
+      email: "",
+      first_name: "",
+      last_name: ""
     }
+
+    const addMemberResponse = await fetch(`${API_HOST}:${API_PORT}/member`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(addMemberPayload)
+    })
+
+    if (!addMemberResponse.ok) {
+      switch (addMemberResponse.status) {
+        case 409:
+          setFormState(prev => ({
+            ...prev,
+            phoneError:
+              "Ce numéro de télphone est déjà associé à un compte existant.",
+            isPhoneInvalid: true
+          }))
+          break
+
+        default:
+          const error = await addMemberResponse.json()
+          console.error(error)
+          break
+      }
+      return
+    }
+
+    onCloseFn()
+    setFormState(prev => ({
+      phone: "",
+      phoneError: "",
+      isPhoneInvalid: false
+    }))
   }
 
   return (
@@ -59,6 +94,7 @@ export default function AdminPanelPage() {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         placement="center"
+        size="xs"
       >
         <ModalContent>
           {onClose => (
