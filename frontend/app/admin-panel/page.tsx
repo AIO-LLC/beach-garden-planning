@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { button as buttonStyles } from "@heroui/theme"
 import { Form, Input, Button, addToast, useDisclosure } from "@heroui/react"
@@ -16,12 +15,13 @@ const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
 export default function AdminPanelPage() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure()
-
   const [formState, setFormState] = useState({
     phone: "",
     phoneError: "",
     isPhoneInvalid: false
   })
+  const [isFormValid, setIsFormValid] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Veuillez entrer un numéro de téléphone."
@@ -31,14 +31,17 @@ export default function AdminPanelPage() {
   const onSubmit = async onCloseFn => {
     const phoneError = getPhoneError(formState.phone)
     const isPhoneInvalid = phoneError !== ""
-
     setFormState(prev => ({
       ...prev,
       phoneError,
       isPhoneInvalid
     }))
+    if (isPhoneInvalid) {
+      setIsFormValid(false)
+      return
+    }
 
-    if (isPhoneInvalid) return
+    setIsLoading(true)
 
     const addMemberPayload = {
       id: "",
@@ -49,38 +52,40 @@ export default function AdminPanelPage() {
       last_name: ""
     }
 
-    const addMemberResponse = await fetch(`${API_HOST}:${API_PORT}/member`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(addMemberPayload)
-    })
+    try {
+      const res = await fetch(`${API_HOST}:${API_PORT}/member`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(addMemberPayload)
+      })
 
-    if (!addMemberResponse.ok) {
-      switch (addMemberResponse.status) {
-        case 409:
-          setFormState(prev => ({
-            ...prev,
-            phoneError:
-              "Ce numéro de télphone est déjà associé à un compte existant.",
-            isPhoneInvalid: true
-          }))
-          break
-
-        default:
-          const error = await addMemberResponse.json()
-          console.error(error)
-          break
+      if (res.status === 409) {
+        setIsFormValid(false)
+        setFormState(prev => ({
+          ...prev,
+          phoneError:
+            "Ce numéro de téléphone est déjà associé à un compte existant.",
+          isPhoneInvalid: true
+        }))
+        return
       }
-      return
-    }
 
-    onCloseFn()
-    setFormState(prev => ({
-      phone: "",
-      phoneError: "",
-      isPhoneInvalid: false
-    }))
+      if (!res.ok) {
+        setIsFormValid(false)
+        const error = await res.json()
+        console.error(error)
+        addToast({ title: "Erreur réseau", status: "danger" })
+        return
+      }
+
+      onCloseFn()
+      setIsFormValid(false)
+      setFormState({ phone: "", phoneError: "", isPhoneInvalid: false })
+      addToast({ title: "Membre ajouté", status: "success" })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -90,6 +95,7 @@ export default function AdminPanelPage() {
         Ajouter un membre
       </Button>
       <Modal
+        closeButton={<div></div>}
         isDismissable={false}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
@@ -105,14 +111,15 @@ export default function AdminPanelPage() {
               <Form
                 encType="multipart/form-data"
                 method="post"
-                onSubmit={event => {
-                  event.preventDefault()
+                onSubmit={e => {
+                  e.preventDefault()
                   onSubmit(onClose)
                 }}
               >
                 <ModalBody className="w-full">
                   <Input
                     className="w-full"
+                    isDisabled={isLoading}
                     errorMessage={formState.phoneError}
                     isInvalid={formState.isPhoneInvalid}
                     label="Numéro de téléphone"
@@ -123,17 +130,29 @@ export default function AdminPanelPage() {
                     startContent="+"
                     value={formState.phone}
                     onValueChange={newValue => {
-                      setFormState(prev => ({
+                      setIsFormValid(true)
+                      setFormState({
                         phone: newValue,
                         phoneError: "",
                         isPhoneInvalid: false
-                      }))
+                      })
                     }}
                   />
                 </ModalBody>
                 <ModalFooter className="w-full">
-                  <Button onPress={onClose}>Retour</Button>
-                  <Button color="primary" type="submit">
+                  <Button
+                    type="button"
+                    onPress={onClose}
+                    isDisabled={isLoading}
+                  >
+                    Retour
+                  </Button>
+                  <Button
+                    color="primary"
+                    type="submit"
+                    isDisabled={!isFormValid}
+                    isLoading={isLoading}
+                  >
                     Ajouter
                   </Button>
                 </ModalFooter>
