@@ -43,8 +43,13 @@ pub async fn login(
 
     let is_profile_complete: bool =
         member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
-    let token: String =
-        create_jwt(&member.id, &member.phone, is_profile_complete).expect("Could not create JWT.");
+    let token: String = create_jwt(
+        &member.id,
+        &member.phone,
+        is_profile_complete,
+        member.is_admin,
+    )
+    .expect("Could not create JWT.");
 
     let flags = if cfg!(debug_assertions) {
         ""
@@ -172,8 +177,13 @@ pub async fn refresh_jwt(
         member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
 
     // Create a new JWT with updated profile completion status
-    let new_token: String =
-        create_jwt(&member.id, &member.phone, is_profile_complete).expect("Could not create JWT.");
+    let new_token: String = create_jwt(
+        &member.id,
+        &member.phone,
+        is_profile_complete,
+        member.is_admin,
+    )
+    .expect("Could not create JWT.");
 
     // Set the new token in cookies
     let flags = if cfg!(debug_assertions) {

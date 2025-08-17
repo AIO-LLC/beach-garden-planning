@@ -11,6 +11,7 @@ pub struct Claims {
     iat: usize,
     pub phone: String,
     pub is_profile_complete: bool,
+    pub is_admin: bool,
 }
 
 fn get_secret() -> String {
@@ -22,6 +23,7 @@ pub fn create_jwt(
     id: &str,
     phone: &str,
     is_profile_complete: bool,
+    is_admin: bool,
 ) -> Result<String, jsonwebtoken::errors::Error> {
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
@@ -34,6 +36,7 @@ pub fn create_jwt(
         iat: Utc::now().timestamp() as usize,
         phone: phone.to_string(),
         is_profile_complete,
+        is_admin,
     };
 
     encode(
