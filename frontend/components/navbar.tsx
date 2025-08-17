@@ -25,10 +25,13 @@ export const Navbar = () => {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const getJwtClaimsResponse = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
-          method: "GET",
-          credentials: "include"
-        })
+        const getJwtClaimsResponse = await fetch(
+          `${API_HOST}:${API_PORT}/jwt-claims`,
+          {
+            method: "GET",
+            credentials: "include"
+          }
+        )
 
         if (getJwtClaimsResponse.ok) {
           const claims = await getJwtClaimsResponse.json()
