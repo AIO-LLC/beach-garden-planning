@@ -86,11 +86,10 @@ pub async fn add_member(
             email,
             first_name,
             last_name,
+            is_admin: false,
         },
     )
     .await?;
-
-    // TODO: send otp by SMS
 
     Ok(Json(id_from_db))
 }
@@ -143,6 +142,7 @@ pub async fn update_member(
             email,
             first_name,
             last_name,
+            is_admin: false,
         },
     )
     .await?;
@@ -186,6 +186,7 @@ pub async fn update_member_with_password(
             email,
             first_name,
             last_name,
+            is_admin: false,
         },
     )
     .await?;

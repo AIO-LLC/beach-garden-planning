@@ -6,7 +6,8 @@ CREATE TABLE member (
   password VARCHAR(127) NOT NULL,
   email VARCHAR(255) UNIQUE,
   first_name VARCHAR(63),
-  last_name VARCHAR(63)
+  last_name VARCHAR(63),
+  is_admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE reservation (

@@ -36,6 +36,7 @@ pub async fn get_member(client: &Client, id: &String) -> Result<Member, Error> {
         email: row.try_get("email")?,
         first_name: row.try_get("first_name")?,
         last_name: row.try_get("last_name")?,
+        is_admin: row.try_get("is_admin")?,
     })
 }
 
@@ -53,6 +54,7 @@ pub async fn get_member_by_phone(client: &Client, phone: &String) -> Result<Memb
         email: row.try_get("email")?,
         first_name: row.try_get("first_name")?,
         last_name: row.try_get("last_name")?,
+        is_admin: row.try_get("is_admin")?,
     })
 }
 
@@ -70,6 +72,7 @@ pub async fn get_member_by_email(client: &Client, email: &String) -> Result<Memb
         email: row.try_get("email")?,
         first_name: row.try_get("first_name")?,
         last_name: row.try_get("last_name")?,
+        is_admin: row.try_get("is_admin")?,
     })
 }
 
@@ -85,6 +88,7 @@ pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
                 email: row.try_get("email")?,
                 first_name: row.try_get("first_name")?,
                 last_name: row.try_get("last_name")?,
+                is_admin: row.try_get("is_admin")?,
             })
         })
         .collect()

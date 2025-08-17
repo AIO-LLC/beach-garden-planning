@@ -10,6 +10,7 @@ pub struct Member {
     pub email: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

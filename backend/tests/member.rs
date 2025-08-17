@@ -29,6 +29,7 @@ async fn add_member() -> Result<(), anyhow::Error> {
     assert_eq!(member_from_db.email, Some("john.doe@email.com".to_string()));
     assert_eq!(member_from_db.first_name, Some("John".to_string()));
     assert_eq!(member_from_db.last_name, Some("Doe".to_string()));
+    assert!(!member_from_db.is_admin);
 
     Ok(())
 }
@@ -54,6 +55,7 @@ async fn get_member() -> Result<(), anyhow::Error> {
     );
     assert_eq!(member_from_server.first_name, Some("John".to_string()));
     assert_eq!(member_from_server.last_name, Some("Doe".to_string()));
+    assert!(!member_from_server.is_admin);
 
     Ok(())
 }
@@ -95,6 +97,7 @@ async fn update_member() -> Result<(), anyhow::Error> {
     );
     assert_eq!(member_from_db.first_name, Some("Jane".to_string()));
     assert_eq!(member_from_db.last_name, Some("Does".to_string()));
+    assert!(!member_from_db.is_admin);
 
     Ok(())
 }
