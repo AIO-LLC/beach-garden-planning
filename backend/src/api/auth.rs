@@ -102,6 +102,7 @@ pub async fn get_jwt_claims(
         "id": claims.sub,
         "phone": claims.phone,
         "is_profile_complete": claims.is_profile_complete,
+        "is_admin": claims.is_admin
     }))
     .into_response())
 }
