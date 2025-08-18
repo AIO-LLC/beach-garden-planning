@@ -172,28 +172,30 @@ export default function AdminPanelPage() {
     resetModal()
     onCreateChange()
   }
+
+  async function load() {
+    try {
+      const res = await fetch(
+        `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
+        {
+          credentials: "include"
+        }
+      )
+      if (!res.ok) throw new Error("Échec du chargement")
+      const data: Member[] = await res.json()
+      setMembers(data)
+      setTotal(data.length)
+    } catch (err) {
+      console.error(err)
+      addToast({
+        title: "Impossible de charger les membres.",
+        color: "danger"
+      })
+    }
+  }
+
   // Charger la page courante
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(
-          `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
-          {
-            credentials: "include"
-          }
-        )
-        if (!res.ok) throw new Error("Échec du chargement")
-        const data: Member[] = await res.json()
-        setMembers(data)
-        setTotal(data.length)
-      } catch (err) {
-        console.error(err)
-        addToast({
-          title: "Impossible de charger les membres.",
-          color: "danger"
-        })
-      }
-    }
     load()
   }, [page])
 
@@ -208,6 +210,7 @@ export default function AdminPanelPage() {
       if (!res.ok) throw new Error()
       addToast({ title: "Membre supprimé.", color: "success" })
       // Recharger la page courante
+      load()
       setPage(1)
     } catch {
       addToast({ title: "Erreur de suppression.", color: "danger" })
@@ -264,7 +267,6 @@ export default function AdminPanelPage() {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
       <Pagination
         current={page}
         total={pages}
@@ -272,7 +274,6 @@ export default function AdminPanelPage() {
         className="mt-4"
       />
 
-      {/* Modal de création existante */}
       <Modal
         isOpen={isCreateOpen}
         onOpenChange={handleModalClose}
@@ -286,7 +287,6 @@ export default function AdminPanelPage() {
           {onClose => (
             <>
               {!showSuccessScreen ? (
-                // Original form
                 <>
                   <ModalHeader className="flex flex-col gap-1">
                     Ajouter un membre
