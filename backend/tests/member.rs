@@ -7,9 +7,16 @@ use backend::{
 };
 use common::{add_member_request, create_test_server};
 use deadpool_postgres::{Client, Pool};
+use serde::Deserialize;
 use serde_json::json;
 use testcontainers::ContainerAsync;
 use testcontainers_modules::postgres::Postgres;
+
+#[derive(Deserialize)]
+struct AddMemberResponse {
+    member_id: String,
+    otp: String,
+}
 
 #[tokio::test]
 async fn add_member() -> Result<(), anyhow::Error> {
@@ -18,7 +25,9 @@ async fn add_member() -> Result<(), anyhow::Error> {
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
     add_member_res.assert_status_ok();
-    let member_id: String = add_member_res.json();
+    let response_body: AddMemberResponse = add_member_res.json();
+    let member_id: String = response_body.member_id;
+    assert_eq!(response_body.otp.len(), 6);
 
     let client: Client = pool.get().await?;
     let member_from_db: Member = queries::member::get_member(&client, &member_id).await?;
@@ -40,7 +49,8 @@ async fn get_member() -> Result<(), anyhow::Error> {
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
-    let member_id: String = add_member_res.json();
+    let response_body: AddMemberResponse = add_member_res.json();
+    let member_id: String = response_body.member_id;
 
     let get_member_res: TestResponse = server.get(&format!("/member/{member_id}")).await;
     get_member_res.assert_status_ok();
@@ -66,7 +76,8 @@ async fn update_member() -> Result<(), anyhow::Error> {
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
-    let member_id: String = add_member_res.json();
+    let response_body: AddMemberResponse = add_member_res.json();
+    let member_id: String = response_body.member_id;
 
     let new_hashed_password: String =
         hash_password(&"password".to_string()).expect("Could not hash password.");
@@ -108,7 +119,8 @@ async fn delete_member() -> Result<(), anyhow::Error> {
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
-    let member_id: String = add_member_res.json();
+    let response_body: AddMemberResponse = add_member_res.json();
+    let member_id: String = response_body.member_id;
 
     let delete_member_res: TestResponse = server.delete(&format!("/member/{member_id}")).await;
     delete_member_res.assert_status_ok();
