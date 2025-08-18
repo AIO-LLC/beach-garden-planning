@@ -1,7 +1,23 @@
 "use client"
-import { useState } from "react"
-import { button as buttonStyles } from "@heroui/theme"
-import { Form, Input, Button, addToast, useDisclosure } from "@heroui/react"
+import { LuEye, LuTrash2 } from "react-icons/lu"
+import { useState, useEffect } from "react"
+import {
+  Button,
+  addToast,
+  useDisclosure,
+  Pagination,
+  Tooltip,
+  Form,
+  Input
+} from "@heroui/react"
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableColumn,
+  TableRow,
+  TableCell
+} from "@heroui/table"
 import {
   Modal,
   ModalContent,
@@ -13,8 +29,35 @@ import {
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 
+interface Member {
+  id: string
+  phone: string
+  password: string
+  email?: string
+  first_name?: string
+  last_name?: string
+  is_admin: boolean
+}
+
 export default function AdminPanelPage() {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure()
+  const {
+    isOpen: isCreateOpen,
+    onOpen: openCreate,
+    onOpenChange: onCreateChange
+  } = useDisclosure()
+  const {
+    isOpen: isViewOpen,
+    onOpen: openView,
+    onOpenChange: onViewChange
+  } = useDisclosure()
+  const [viewMember, setViewMember] = useState<Member | null>(null)
+
+  const [members, setMembers] = useState<Member[]>([])
+  const [page, setPage] = useState(1)
+  const [perPage] = useState(5)
+  const [total, setTotal] = useState(0)
+  const pages = Math.ceil(total / perPage)
+
   const [formState, setFormState] = useState({
     phone: "",
     phoneError: "",
@@ -127,23 +170,108 @@ export default function AdminPanelPage() {
 
   const handleModalClose = () => {
     resetModal()
-    onOpenChange()
+    onCreateChange()
+  }
+  // Charger la page courante
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(
+          `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
+          {
+            credentials: "include"
+          }
+        )
+        if (!res.ok) throw new Error("Échec du chargement")
+        const data: Member[] = await res.json()
+        setMembers(data)
+        setTotal(data.length)
+      } catch (err) {
+        console.error(err)
+        addToast({
+          title: "Impossible de charger les membres.",
+          color: "danger"
+        })
+      }
+    }
+    load()
+  }, [page])
+
+  // Supprimer un membre
+  const deleteMember = async (id: string) => {
+    if (!confirm("Supprimer ce membre ?")) return
+    try {
+      const res = await fetch(`${API_HOST}:${API_PORT}/member/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+      if (!res.ok) throw new Error()
+      addToast({ title: "Membre supprimé.", color: "success" })
+      // Recharger la page courante
+      setPage(1)
+    } catch {
+      addToast({ title: "Erreur de suppression.", color: "danger" })
+    }
+  }
+
+  // Ouvrir modal de vue
+  const onView = (m: Member) => {
+    setViewMember(m)
+    openView()
   }
 
   return (
     <>
       <h1 className="font-bold text-xl my-4">Administration</h1>
-      <Button color="primary" onClick={onOpen}>
+
+      {/* Bouton Ajouter */}
+      <Button color="primary" onClick={openCreate}>
         Ajouter un membre
       </Button>
+
+      <Table aria-label="member table" className="mt-6" isStriped>
+        <TableHeader>
+          <TableColumn>N° de téléphone</TableColumn>
+          <TableColumn>Prénom</TableColumn>
+          <TableColumn>Nom</TableColumn>
+          <TableColumn>Actions</TableColumn>
+        </TableHeader>
+        <TableBody>
+          {members.map(m => (
+            <TableRow key={m.id}>
+              <TableCell>+{m.phone || "-"}</TableCell>
+              <TableCell>{m.first_name || "-"}</TableCell>
+              <TableCell>{m.last_name || "-"}</TableCell>
+              <TableCell className="flex gap-2">
+                <span className="text-lg text-default-400 cursor-pointer">
+                  <LuEye />
+                </span>
+                <span className="text-lg text-danger cursor-pointer">
+                  <LuTrash2 />
+                </span>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
+      <Pagination
+        current={page}
+        total={pages}
+        onChange={p => setPage(p)}
+        className="mt-4"
+      />
+
+      {/* Modal de création existante */}
       <Modal
-        closeButton={<div></div>}
+        isOpen={isCreateOpen}
+        onOpenChange={handleModalClose}
         isDismissable={false}
         isKeyboardDismissDisabled
-        isOpen={isOpen}
-        onOpenChange={handleModalClose}
         placement="center"
         size="xs"
+        closeButton={<div />}
       >
         <ModalContent>
           {onClose => (
@@ -245,6 +373,46 @@ export default function AdminPanelPage() {
                   </ModalBody>
                 </>
               )}
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de vue */}
+      <Modal
+        isOpen={isViewOpen}
+        onOpenChange={onViewChange}
+        placement="center"
+        size="sm"
+      >
+        <ModalContent>
+          {onClose => (
+            <>
+              <ModalHeader>Informations du membre</ModalHeader>
+              <ModalBody className="space-y-2">
+                <p>
+                  <strong>ID :</strong> {viewMember?.id}
+                </p>
+                <p>
+                  <strong>Téléphone :</strong> {viewMember?.phone}
+                </p>
+                <p>
+                  <strong>Email :</strong> {viewMember?.email || "-"}
+                </p>
+                <p>
+                  <strong>Prénom :</strong> {viewMember?.first_name || "-"}
+                </p>
+                <p>
+                  <strong>Nom :</strong> {viewMember?.last_name || "-"}
+                </p>
+                <p>
+                  <strong>Admin :</strong>{" "}
+                  {viewMember?.is_admin ? "Oui" : "Non"}
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button onPress={onClose}>Fermer</Button>
+              </ModalFooter>
             </>
           )}
         </ModalContent>
