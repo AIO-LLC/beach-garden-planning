@@ -10,6 +10,7 @@ use axum::{
     response::Response,
 };
 use chrono::Local;
+use rand::{Rng, rng};
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
@@ -50,7 +51,7 @@ pub struct PasswordResetPayload {
 pub async fn add_member(
     State(state): State<AppState>,
     Json(payload): Json<MemberPayload>,
-) -> Result<Json<String>, ApiError> {
+) -> Result<Response, ApiError> {
     let id: String = match payload.id {
         ref id if id.is_empty() => gen_id().expect("Could not generate an ID."),
         id => id,
@@ -72,7 +73,9 @@ pub async fn add_member(
     };
 
     // For first log in only
-    let otp: String = "123456".to_string();
+    let otp: String = (0..6)
+        .map(|_| rng().random_range(0..10).to_string())
+        .collect();
     let hashed_otp: String = hash_password(&otp).expect("Could not hash password.");
 
     let client = state.pool.get().await?;
@@ -91,7 +94,16 @@ pub async fn add_member(
     )
     .await?;
 
-    Ok(Json(id_from_db))
+    let response = (
+        StatusCode::OK,
+        Json(json!({
+            "member_id": id_from_db,
+            "otp": otp,
+        })),
+    )
+        .into_response();
+
+    Ok(response)
 }
 
 pub async fn get_member(
