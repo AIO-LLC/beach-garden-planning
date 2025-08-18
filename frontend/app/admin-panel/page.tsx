@@ -22,27 +22,57 @@ export default function AdminPanelPage() {
   })
   const [isFormValid, setIsFormValid] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showSuccessScreen, setShowSuccessScreen] = useState<boolean>(false)
+  const [memberData, setMemberData] = useState<{
+    phone: string
+    otp: string
+  } | null>(null)
+  const [hasCopied, setHasCopied] = useState<boolean>(false)
 
   const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Veuillez entrer un numéro de téléphone."
     return ""
   }
 
-  const onSubmit = async onCloseFn => {
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setHasCopied(true)
+      addToast({ title: "Mot de passe provisoire copié !", color: "success" })
+    } catch (err) {
+      console.error("Failed to copy OTP: ", err)
+      addToast({
+        title:
+          "Erreur lors de la copie du mot de passe provisoire. Veuillez le copier manuellement.",
+        color: "danger"
+      })
+    }
+  }
+
+  const resetModal = () => {
+    setShowSuccessScreen(false)
+    setMemberData(null)
+    setHasCopied(false)
+    setIsFormValid(false)
+    setFormState({ phone: "", phoneError: "", isPhoneInvalid: false })
+  }
+
+  const onSubmit = async () => {
     const phoneError = getPhoneError(formState.phone)
     const isPhoneInvalid = phoneError !== ""
+
     setFormState(prev => ({
       ...prev,
       phoneError,
       isPhoneInvalid
     }))
+
     if (isPhoneInvalid) {
       setIsFormValid(false)
       return
     }
 
     setIsLoading(true)
-
     const addMemberPayload = {
       id: "",
       phone: formState.phone,
@@ -75,17 +105,29 @@ export default function AdminPanelPage() {
         setIsFormValid(false)
         const error = await res.json()
         console.error(error)
-        addToast({ title: "Une erreur est survenue. Veuillez réessayer plus tard.", color: "danger" })
+        addToast({
+          title: "Une erreur est survenue. Veuillez réessayer plus tard.",
+          color: "danger"
+        })
         return
       }
 
-      onCloseFn()
-      setIsFormValid(false)
-      setFormState({ phone: "", phoneError: "", isPhoneInvalid: false })
-      addToast({ title: "Membre ajouté !", color: "success" })
+      const resBody = await res.json()
+
+      // Set member data and show success screen
+      setMemberData({
+        phone: formState.phone,
+        otp: resBody.otp
+      })
+      setShowSuccessScreen(true)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleModalClose = () => {
+    resetModal()
+    onOpenChange()
   }
 
   return (
@@ -97,66 +139,112 @@ export default function AdminPanelPage() {
       <Modal
         closeButton={<div></div>}
         isDismissable={false}
+        isKeyboardDismissDisabled
         isOpen={isOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleModalClose}
         placement="center"
         size="xs"
       >
         <ModalContent>
           {onClose => (
             <>
-              <ModalHeader className="flex flex-col gap-1">
-                Ajouter un membre
-              </ModalHeader>
-              <Form
-                encType="multipart/form-data"
-                method="post"
-                onSubmit={e => {
-                  e.preventDefault()
-                  onSubmit(onClose)
-                }}
-              >
-                <ModalBody className="w-full">
-                  <Input
-                    className="w-full"
-                    isDisabled={isLoading}
-                    errorMessage={formState.phoneError}
-                    isInvalid={formState.isPhoneInvalid}
-                    label="Numéro de téléphone"
-                    labelPlacement="outside"
-                    name="phone"
-                    placeholder="Entrez le numéro de téléphone"
-                    type="text"
-                    startContent="+"
-                    value={formState.phone}
-                    onValueChange={newValue => {
-                      setIsFormValid(true)
-                      setFormState({
-                        phone: newValue,
-                        phoneError: "",
-                        isPhoneInvalid: false
-                      })
+              {!showSuccessScreen ? (
+                // Original form
+                <>
+                  <ModalHeader className="flex flex-col gap-1">
+                    Ajouter un membre
+                  </ModalHeader>
+                  <Form
+                    encType="multipart/form-data"
+                    method="post"
+                    onSubmit={e => {
+                      e.preventDefault()
+                      onSubmit()
                     }}
-                  />
-                </ModalBody>
-                <ModalFooter className="w-full">
-                  <Button
-                    type="button"
-                    onPress={onClose}
-                    isDisabled={isLoading}
                   >
-                    Retour
-                  </Button>
-                  <Button
-                    color="primary"
-                    type="submit"
-                    isDisabled={!isFormValid}
-                    isLoading={isLoading}
-                  >
-                    Ajouter
-                  </Button>
-                </ModalFooter>
-              </Form>
+                    <ModalBody className="w-full">
+                      <Input
+                        className="w-full"
+                        isDisabled={isLoading}
+                        errorMessage={formState.phoneError}
+                        isInvalid={formState.isPhoneInvalid}
+                        label="Numéro de téléphone"
+                        labelPlacement="outside"
+                        name="phone"
+                        placeholder="Entrez le numéro de téléphone"
+                        type="text"
+                        startContent="+"
+                        value={formState.phone}
+                        onValueChange={newValue => {
+                          setIsFormValid(true)
+                          setFormState({
+                            phone: newValue,
+                            phoneError: "",
+                            isPhoneInvalid: false
+                          })
+                        }}
+                      />
+                    </ModalBody>
+                    <ModalFooter className="w-full">
+                      <Button
+                        type="button"
+                        onPress={() => {
+                          resetModal()
+                          onClose()
+                        }}
+                        isDisabled={isLoading}
+                      >
+                        Retour
+                      </Button>
+                      <Button
+                        color="primary"
+                        type="submit"
+                        isDisabled={!isFormValid}
+                        isLoading={isLoading}
+                      >
+                        Ajouter
+                      </Button>
+                    </ModalFooter>
+                  </Form>
+                </>
+              ) : (
+                // Success screen
+                <>
+                  <ModalHeader className="flex flex-col gap-1">
+                    <span className="text-green-600 font-bold">
+                      Membre ajouté !
+                    </span>
+                  </ModalHeader>
+                  <ModalBody className="w-full">
+                    <p>
+                      Veuillez copier puis envoyer ce mot de passe provisoire au{" "}
+                      <b>+{memberData?.phone}</b> :
+                    </p>
+                    <p className="text-lg font-bold text-center my-4">
+                      {memberData?.otp}
+                    </p>
+                    <div className="flex w-full justify-between mb-2">
+                      <Button
+                        color="primary"
+                        onPress={() => copyToClipboard(memberData?.otp || "")}
+                      >
+                        Copier
+                      </Button>
+                      {hasCopied && (
+                        <Button
+                          color="default"
+                          onPress={() => {
+                            resetModal()
+                            onClose()
+                          }}
+                        >
+                          Fermer
+                        </Button>
+                      )}
+                    </div>
+                  </ModalBody>
+                </>
+              )}
             </>
           )}
         </ModalContent>
