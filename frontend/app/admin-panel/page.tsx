@@ -243,10 +243,19 @@ export default function AdminPanelPage() {
               <TableCell>{m.first_name || "-"}</TableCell>
               <TableCell>{m.last_name || "-"}</TableCell>
               <TableCell className="flex gap-2">
-                <span className="text-lg text-default-400 cursor-pointer">
+                <span
+                  className="text-lg text-default-400 cursor-pointer"
+                  onClick={() => {
+                    setViewMember(m)
+                    openView()
+                  }}
+                >
                   <LuEye />
                 </span>
-                <span className="text-lg text-danger cursor-pointer">
+                <span
+                  className="text-lg text-danger cursor-pointer"
+                  onClick={() => deleteMember(m.id)}
+                >
                   <LuTrash2 />
                 </span>
               </TableCell>
@@ -378,12 +387,14 @@ export default function AdminPanelPage() {
         </ModalContent>
       </Modal>
 
-      {/* Modal de vue */}
       <Modal
+        isDismissable={false}
+        isKeyboardDismissDisabled
         isOpen={isViewOpen}
         onOpenChange={onViewChange}
         placement="center"
         size="sm"
+        closeButton={<div />}
       >
         <ModalContent>
           {onClose => (
@@ -394,7 +405,7 @@ export default function AdminPanelPage() {
                   <strong>ID :</strong> {viewMember?.id}
                 </p>
                 <p>
-                  <strong>Téléphone :</strong> {viewMember?.phone}
+                  <strong>Téléphone :</strong> +{viewMember?.phone}
                 </p>
                 <p>
                   <strong>Email :</strong> {viewMember?.email || "-"}
@@ -406,8 +417,8 @@ export default function AdminPanelPage() {
                   <strong>Nom :</strong> {viewMember?.last_name || "-"}
                 </p>
                 <p>
-                  <strong>Admin :</strong>{" "}
-                  {viewMember?.is_admin ? "Oui" : "Non"}
+                  <strong>Rôle :</strong>{" "}
+                  {viewMember?.is_admin ? "Administrateur" : "Adhérent"}
                 </p>
               </ModalBody>
               <ModalFooter>
