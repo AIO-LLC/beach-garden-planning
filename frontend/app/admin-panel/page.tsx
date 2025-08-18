@@ -271,7 +271,7 @@ export default function AdminPanelPage() {
         current={page}
         total={pages}
         onChange={p => setPage(p)}
-        className="mt-4"
+        className="mt-4 flex justify-center"
       />
 
       <Modal
