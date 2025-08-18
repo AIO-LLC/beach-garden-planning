@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --fix",
-    "format": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.toml"
+    "fmt": "prettier --write './**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc.toml"
   },
   "dependencies": {
     "@heroui/button": "2.2.23",
