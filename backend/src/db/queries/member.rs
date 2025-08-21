@@ -76,6 +76,43 @@ pub async fn get_member_by_email(client: &Client, email: &String) -> Result<Memb
     })
 }
 
+// Get total count of members
+pub async fn get_members_count(client: &Client) -> Result<u32, Error> {
+    let row = client.query_one("SELECT COUNT(*) FROM member", &[]).await?;
+    let count: i64 = row.get(0);
+    Ok(count as u32)
+}
+
+// Get paginated members
+pub async fn get_members_paginated(
+    client: &Client,
+    page: u32,
+    per_page: u32,
+) -> Result<Vec<Member>, Error> {
+    let offset = (page - 1) * per_page;
+
+    let rows: Vec<Row> = client
+        .query(
+            "SELECT * FROM member ORDER BY id LIMIT $1 OFFSET $2",
+            &[&(per_page as i64), &(offset as i64)],
+        )
+        .await?;
+
+    rows.into_iter()
+        .map(|row| -> Result<Member, Error> {
+            Ok(Member {
+                id: row.try_get("id")?,
+                phone: row.try_get("phone")?,
+                password: row.try_get("password")?,
+                email: row.try_get("email")?,
+                first_name: row.try_get("first_name")?,
+                last_name: row.try_get("last_name")?,
+                is_admin: row.try_get("is_admin")?,
+            })
+        })
+        .collect()
+}
+
 pub async fn get_all_members(client: &Client) -> Result<Vec<Member>, Error> {
     let rows: Vec<Row> = client.query("SELECT * FROM member", &[]).await?;
 
