@@ -5,15 +5,39 @@ use crate::utils::{gen_id, hash_password};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::response::IntoResponse;
 use axum::{
-    extract::{Json, Path, State},
+    extract::{Json, Path, Query, State},
     http::StatusCode,
     response::Response,
 };
 use chrono::Local;
 use rand::{Rng, rng};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<u32>,
+    pub per_page: Option<u32>,
+}
+
+impl Default for PaginationParams {
+    fn default() -> Self {
+        Self {
+            page: Some(1),
+            per_page: Some(10),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct PaginatedResponse {
+    pub items: Vec<models::Member>,
+    pub total_count: u32,
+    pub page: u32,
+    pub per_page: u32,
+    pub total_pages: u32,
+}
 
 #[derive(Deserialize)]
 pub struct MemberPayload {
@@ -119,10 +143,30 @@ pub async fn get_member(
 
 pub async fn get_all_members(
     State(state): State<AppState>,
-) -> Result<Json<Vec<models::Member>>, ApiError> {
+    Query(params): Query<PaginationParams>,
+) -> Result<Json<PaginatedResponse>, ApiError> {
     let client = state.pool.get().await?;
-    let members = member::get_all_members(&client).await?;
-    Ok(Json(members))
+
+    // Use defaults if not provided
+    let page = params.page.unwrap_or(1);
+    let per_page = params.per_page.unwrap_or(10);
+
+    // Get total count first
+    let total_count = member::get_members_count(&client).await?;
+    let total_pages = (total_count as f32 / per_page as f32).ceil() as u32;
+
+    // Get paginated members
+    let members = member::get_members_paginated(&client, page, per_page).await?;
+
+    let response = PaginatedResponse {
+        items: members,
+        total_count,
+        page,
+        per_page,
+        total_pages,
+    };
+
+    Ok(Json(response))
 }
 
 pub async fn update_member(
