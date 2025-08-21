@@ -39,6 +39,14 @@ interface Member {
   is_admin: boolean
 }
 
+interface PaginatedResponse {
+  items: Member[]
+  total_count: number
+  page: number
+  per_page: number
+  total_pages: number
+}
+
 export default function AdminPanelPage() {
   const {
     isOpen: isCreateOpen,
@@ -177,20 +185,18 @@ export default function AdminPanelPage() {
     try {
       const res = await fetch(
         `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
-        {
-          credentials: "include"
-        }
+        { credentials: "include" }
       )
       if (!res.ok) throw new Error("Échec du chargement")
-      const data: Member[] = await res.json()
-      setMembers(data)
-      setTotal(data.length)
+
+      const data: PaginatedResponse<Member> = await res.json()
+      setMembers(data.items)
+      setTotal(data.total_count)
+      // setPerPage(data.per_page)
+      // setPages(data.total_pages)
     } catch (err) {
       console.error(err)
-      addToast({
-        title: "Impossible de charger les membres.",
-        color: "danger"
-      })
+      addToast({ title: "Impossible de charger les membres.", color: "danger" })
     }
   }
 
@@ -268,9 +274,10 @@ export default function AdminPanelPage() {
       </Table>
 
       <Pagination
-        current={page}
+        showControls
+        page={page}
         total={pages}
-        onChange={p => setPage(p)}
+        onChange={setPage}
         className="mt-4 flex justify-center"
       />
 
@@ -363,7 +370,7 @@ export default function AdminPanelPage() {
                     <div className="flex w-full justify-between mb-2">
                       <Button
                         color="primary"
-                        onPress={() => copyToClipboard(memberData?.otp || "")}
+                        onClick={() => copyToClipboard(memberData?.otp || "")}
                       >
                         Copier
                       </Button>
