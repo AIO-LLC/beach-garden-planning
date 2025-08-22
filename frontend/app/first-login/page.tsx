@@ -243,7 +243,12 @@ export default function FirstLoginPage() {
           onValueChange={setPasswordConfirmation}
         />
 
-        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
+        <Button
+          className="mt-4"
+          color="primary"
+          type="submit"
+          isDisabled={!isFormValid()}
+        >
           Confirmer
         </Button>
       </Form>
