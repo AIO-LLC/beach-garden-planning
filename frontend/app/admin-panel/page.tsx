@@ -62,7 +62,7 @@ export default function AdminPanelPage() {
 
   const [members, setMembers] = useState<Member[]>([])
   const [page, setPage] = useState(1)
-  const [perPage] = useState(5)
+  const [perPage] = useState(10)
   const [total, setTotal] = useState(0)
   const pages = Math.ceil(total / perPage)
 
@@ -78,32 +78,15 @@ export default function AdminPanelPage() {
     phone: string
     otp: string
   } | null>(null)
-  const [hasCopied, setHasCopied] = useState<boolean>(false)
 
   const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Veuillez entrer un numéro de téléphone."
     return ""
   }
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setHasCopied(true)
-      addToast({ title: "Mot de passe provisoire copié !", color: "success" })
-    } catch (err) {
-      console.error("Failed to copy OTP: ", err)
-      addToast({
-        title:
-          "Erreur lors de la copie du mot de passe provisoire. Veuillez le copier manuellement.",
-        color: "danger"
-      })
-    }
-  }
-
   const resetModal = () => {
     setShowSuccessScreen(false)
     setMemberData(null)
-    setHasCopied(false)
     setIsFormValid(false)
     setFormState({ phone: "", phoneError: "", isPhoneInvalid: false })
   }
@@ -369,22 +352,14 @@ export default function AdminPanelPage() {
                     </p>
                     <div className="flex w-full justify-between mb-2">
                       <Button
-                        color="primary"
-                        onClick={() => copyToClipboard(memberData?.otp || "")}
+                        color="default"
+                        onPress={() => {
+                          resetModal()
+                          onClose()
+                        }}
                       >
-                        Copier
+                        Fermer
                       </Button>
-                      {hasCopied && (
-                        <Button
-                          color="default"
-                          onPress={() => {
-                            resetModal()
-                            onClose()
-                          }}
-                        >
-                          Fermer
-                        </Button>
-                      )}
                     </div>
                   </ModalBody>
                 </>
