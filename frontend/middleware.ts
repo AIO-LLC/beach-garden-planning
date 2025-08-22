@@ -3,14 +3,26 @@ import type { NextFetchEvent } from "next/server"
 import { NextResponse, NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 
-const authRequiredPaths = ["/planning", "/account", "/edit-password"]
-const profileRequiredPaths = ["/planning", "/account", "/edit-password"]
+const authRequiredPaths = [
+  "/planning",
+  "/account",
+  "/edit-password",
+  "/admin-panel"
+]
+const profileRequiredPaths = [
+  "/planning",
+  "/account",
+  "/edit-password",
+  "admin-panel"
+]
+const adminRequiredPaths = ["/admin-panel"]
 
 const redirectIfCompletePaths = [
   "/login",
   "/first-login",
   "/password-forgotten",
-  "/password-reset"
+  "/password-reset",
+  "/admin-panel"
 ]
 const redirectIfIncompletePaths = [
   "/account",
@@ -18,7 +30,8 @@ const redirectIfIncompletePaths = [
   "/login",
   "/password-forgotten",
   "/password-reset",
-  "/planning"
+  "/planning",
+  "/admin-panel"
 ]
 
 function getJwtSecret(): Uint8Array {
@@ -37,6 +50,7 @@ interface JwtClaims {
   iat: number
   phone: string
   is_profile_complete: boolean
+  is_admin: boolean
 }
 
 async function verifyJwt(token: string): Promise<JwtClaims | null> {
@@ -58,6 +72,19 @@ export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
   const claims = token ? await verifyJwt(token) : null
   const loggedIn = !!claims
   const complete = !!claims?.is_profile_complete
+  const isAdmin = !!claims?.is_admin
+
+  // Check admin routes first
+  if (adminRequiredPaths.some(p => pathname.startsWith(p))) {
+    if (!loggedIn || !isAdmin) {
+      // Redirect non-logged or non-admin users to home page
+      const homeUrl = req.nextUrl.clone()
+      homeUrl.pathname = "/"
+      return NextResponse.redirect(homeUrl)
+    }
+    // If user is logged in and admin, allow access
+    return NextResponse.next()
+  }
 
   // If not logged in, protect authRequiredPaths as before
   if (!loggedIn) {
@@ -112,6 +139,7 @@ export const config = {
     "/login",
     "/first-login",
     "/password-forgotten",
-    "/password-reset"
+    "/password-reset",
+    "/admin-panel"
   ]
 }
