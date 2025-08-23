@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 CREATE TABLE member (
   id CHAR(6) PRIMARY KEY,
@@ -24,4 +25,18 @@ CREATE TABLE password_reset_token (
     token UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     member_id CHAR(6) NOT NULL REFERENCES member(id) ON DELETE CASCADE,
     expires_at TIMESTAMP NOT NULL DEFAULT NOW() + INTERVAL '1 hour'
+);
+
+-- Delete previous reservations
+SELECT cron.schedule(
+    'cleanup_old_reservations',
+    '0 0 * * 6', -- Every Saturday at midnight
+    $$DELETE FROM reservation WHERE reservation_date < CURRENT_DATE$$
+);
+
+-- Clean up expired password reset tokens
+SELECT cron.schedule(
+    'cleanup_expired_tokens',
+    '0 0 * * 6', -- Every Saturday at midnight
+    $$DELETE FROM password_reset_token WHERE expires_at < NOW()$$
 );
