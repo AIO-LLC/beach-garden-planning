@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
+import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
@@ -113,6 +114,7 @@ export default function AccountPage() {
     }
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
+    data.phone = data.phone.replace(/\D/g, "")
 
     const getJwtClaimsResponse = await fetch(
       `${API_HOST}:${API_PORT}/jwt-claims`,
@@ -199,9 +201,7 @@ export default function AccountPage() {
 
       if (!response.ok) {
         const { error } = await response.json()
-
         console.error(error)
-
         return null
       }
 
@@ -212,6 +212,8 @@ export default function AccountPage() {
       const { id, _phone, _is_profile_complete } = claims
 
       getMemberData(id).then(memberData => {
+        memberData.phone = "+" + memberData.phone
+        console.log(memberData)
         setMember(memberData)
         setOriginalMember(memberData)
       })
@@ -231,17 +233,13 @@ export default function AccountPage() {
         method="post"
         onSubmit={onSubmit}
       >
-        <Input
+        <span className="text-sm">Numéro de téléphone</span>
+        <PhoneInput
           errorMessage={getPhoneError(member.phone)}
           isInvalid={getPhoneError(member.phone) !== null}
-          label="Numéro de téléphone"
-          labelPlacement="outside"
           name="phone"
-          placeholder="Entrez votre numéro de téléphone"
-          type="text"
-          startContent="+"
           value={member.phone}
-          onValueChange={newValue => {
+          onChange={newValue => {
             setMember(prev => ({
               ...prev!,
               phone: newValue

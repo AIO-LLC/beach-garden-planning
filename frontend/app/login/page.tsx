@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
-
+import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
@@ -20,7 +20,8 @@ export default function LogInPage() {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const payload = Object.fromEntries(new FormData(e.currentTarget))
+    var payload = Object.fromEntries(new FormData(e.currentTarget))
+    payload.phone = payload.phone.replace(/\D/g, "")
 
     try {
       const url = `${API_HOST}:${API_PORT}/login`
@@ -62,17 +63,8 @@ export default function LogInPage() {
     <div>
       <h1 className="font-bold text-xl my-5">Se connecter</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
-        <Input
-          required
-          label="Numéro de téléphone"
-          labelPlacement="outside"
-          name="phone"
-          placeholder="Entrez votre numéro de téléphone"
-          type="text"
-          startContent="+"
-          value={phone}
-          onValueChange={setPhone}
-        />
+        <span className="text-sm">Numéro de téléphone</span>
+        <PhoneInput required name="phone" value={phone} onChange={setPhone} />
         <Input
           required
           label="Mot de passe"
