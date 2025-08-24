@@ -33,7 +33,7 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
         <RPNInput.default
           international
           ref={ref}
-          className={`flex ${className}`}
+          className={`flex w-full gap-2 ${className}`}
           countrySelectComponent={CountrySelect}
           flagComponent={FlagComponent}
           inputComponent={InputComponent}
