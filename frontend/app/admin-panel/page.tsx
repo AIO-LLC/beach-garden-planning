@@ -83,6 +83,7 @@ export default function AdminPanelPage() {
 
   const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Veuillez entrer un numéro de téléphone."
+    if (value.length < 10 || value.length > 15) return "Le numéro de téléphone est invalide."
     return ""
   }
 

@@ -51,6 +51,7 @@ export default function AccountPage() {
 
   const getPhoneError = (value: string): string | null => {
     if (value.length === 0) return "Le numéro de téléphone est requis."
+    if (value.length < 10 || value.length > 15) return "Le numéro de téléphone est invalide."
     return null
   }
 
