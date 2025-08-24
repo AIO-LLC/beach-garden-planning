@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@heroui/react"
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
@@ -128,6 +129,13 @@ export default function PlanningDatePage() {
 
   if (!displayDate) return null
 
+  if (!reservations) {
+    return (
+      <>
+        <Spinner className="mt-8" size="lg" />
+      </>
+    )
+  }
   return (
     <div>
       <h1 className="font-bold text-xl my-4">Planning</h1>

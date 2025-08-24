@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@heroui/react"
 import { Link } from "@heroui/link"
 import { button as buttonStyles } from "@heroui/theme"
 import { useState, useEffect } from "react"
@@ -223,7 +224,11 @@ export default function AccountPage() {
   }, [])
 
   if (!member) {
-    return <span>Chargement des informations du compte...</span>
+    return (
+      <>
+        <Spinner className="mt-8" size="lg" />
+      </>
+    )
   }
 
   return (

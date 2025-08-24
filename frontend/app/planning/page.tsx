@@ -1,4 +1,5 @@
 "use client"
+import { Spinner } from "@heroui/react"
 
 function getNextTuesdayOrThursday(): string {
   const today = new Date()
@@ -28,4 +29,10 @@ function getNextTuesdayOrThursday(): string {
 export default function PlanningPage() {
   const defaultDate = getNextTuesdayOrThursday()
   location.replace(`/planning/${defaultDate}`)
+
+  return (
+    <>
+      <Spinner className="mt-8" size="lg" />
+    </>
+  )
 }

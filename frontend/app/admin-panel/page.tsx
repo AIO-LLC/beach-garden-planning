@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@heroui/react"
 import PhoneInput from "@/components/phone-input"
 import { LuEye, LuTrash2 } from "react-icons/lu"
 import { useState, useEffect } from "react"
@@ -227,6 +228,14 @@ export default function AdminPanelPage() {
   const onView = (m: Member) => {
     setViewMember(m)
     openView()
+  }
+
+  if (members.length === 0) {
+    return (
+      <>
+        <Spinner className="mt-8" size="lg" />
+      </>
+    )
   }
 
   return (
