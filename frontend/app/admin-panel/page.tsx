@@ -1,4 +1,6 @@
 "use client"
+
+import PhoneInput from "@/components/phone-input"
 import { LuEye, LuTrash2 } from "react-icons/lu"
 import { useState, useEffect } from "react"
 import {
@@ -109,7 +111,7 @@ export default function AdminPanelPage() {
     setIsLoading(true)
     const addMemberPayload = {
       id: "",
-      phone: formState.phone,
+      phone: formState.phone.replace(/\D/g, ""),
       password: "",
       email: "",
       first_name: "",
@@ -290,19 +292,13 @@ export default function AdminPanelPage() {
                     }}
                   >
                     <ModalBody className="w-full">
-                      <Input
-                        className="w-full"
-                        isDisabled={isLoading}
+                      <span className="text-sm">Numéro de téléphone</span>
+                      <PhoneInput
                         errorMessage={formState.phoneError}
                         isInvalid={formState.isPhoneInvalid}
-                        label="Numéro de téléphone"
-                        labelPlacement="outside"
                         name="phone"
-                        placeholder="Entrez le numéro de téléphone"
-                        type="text"
-                        startContent="+"
                         value={formState.phone}
-                        onValueChange={newValue => {
+                        onChange={newValue => {
                           setIsFormValid(true)
                           setFormState({
                             phone: newValue,
@@ -345,7 +341,7 @@ export default function AdminPanelPage() {
                   <ModalBody className="w-full">
                     <p>
                       Veuillez copier puis envoyer ce mot de passe provisoire au{" "}
-                      <b>+{memberData?.phone}</b> :
+                      <b>{memberData?.phone}</b> :
                     </p>
                     <p className="text-lg font-bold text-center my-4">
                       {memberData?.otp}
