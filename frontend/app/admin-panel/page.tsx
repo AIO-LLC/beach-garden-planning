@@ -83,7 +83,8 @@ export default function AdminPanelPage() {
 
   const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Veuillez entrer un numéro de téléphone."
-    if (value.length < 10 || value.length > 15) return "Le numéro de téléphone est invalide."
+    if (value.length < 10 || value.length > 15)
+      return "Le numéro de téléphone est invalide."
     return ""
   }
 
@@ -157,6 +158,7 @@ export default function AdminPanelPage() {
         otp: resBody.otp
       })
       setShowSuccessScreen(true)
+      load()
     } finally {
       setIsLoading(false)
     }
@@ -173,7 +175,15 @@ export default function AdminPanelPage() {
         `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
         { credentials: "include" }
       )
-      if (!res.ok) throw new Error("Échec du chargement")
+      if (!res.ok) {
+        const error = await res.json()
+        console.error(error)
+        addToast({
+          title:
+            "Impossible de charger les membres. Veuillez contacter l'équipe technique.",
+          color: "danger"
+        })
+      }
 
       const data: PaginatedResponse<Member> = await res.json()
       setMembers(data.items)
@@ -182,7 +192,11 @@ export default function AdminPanelPage() {
       // setPages(data.total_pages)
     } catch (err) {
       console.error(err)
-      addToast({ title: "Impossible de charger les membres.", color: "danger" })
+      addToast({
+        title:
+          "Impossible de charger les membres. Veuillez contacter l'équipe technique.",
+        color: "danger"
+      })
     }
   }
 
