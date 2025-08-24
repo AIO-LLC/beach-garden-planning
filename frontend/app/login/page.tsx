@@ -12,6 +12,7 @@ const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
 export default function LogInPage() {
   const [phone, setPhone] = useState<string>("")
   const [password, setPassword] = useState<string>("")
+  const [isInvalid, setIsInvalid] = useState<boolean>(false)
 
   const isFormValid = (): boolean => {
     return phone !== "" && password !== ""
@@ -33,6 +34,7 @@ export default function LogInPage() {
       })
 
       if (!loginResponse.ok) {
+        setIsInvalid(true)
         addToast({
           title: "Numéro de téléphone ou mot de passe incorrect.",
           color: "danger"
@@ -41,7 +43,6 @@ export default function LogInPage() {
         // TODO: Update response from backend when unknown phone number or wrong password, and show a toast with another error message for server errors or others
         return
       }
-
       const { is_profile_complete } = await loginResponse.json()
 
       if (is_profile_complete) {
@@ -64,8 +65,18 @@ export default function LogInPage() {
       <h1 className="font-bold text-xl my-5">Se connecter</h1>
       <Form encType="multipart/form-data" method="post" onSubmit={onSubmit}>
         <span className="text-sm">Numéro de téléphone</span>
-        <PhoneInput required name="phone" value={phone} onChange={setPhone} />
+        <PhoneInput
+          isInvalid={isInvalid}
+          required
+          name="phone"
+          value={phone}
+          onChange={newValue => {
+            setIsInvalid(false)
+            setPhone(newValue)
+          }}
+        />
         <Input
+          isInvalid={isInvalid}
           required
           label="Mot de passe"
           labelPlacement="outside"
@@ -73,7 +84,10 @@ export default function LogInPage() {
           placeholder="Entrez votre mot de passe"
           type="password"
           value={password}
-          onValueChange={setPassword}
+          onValueChange={newValue => {
+            setIsInvalid(false)
+            setPassword(newValue)
+          }}
         />
         <Link className="underline" href="/password-forgotten">
           Mot de passe oublié ?
