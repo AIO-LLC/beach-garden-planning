@@ -38,3 +38,8 @@ echo "pg_cron setup completed successfully"\n\
 
 # Expose PostgreSQL port
 EXPOSE 5432
+
+# Set default environment variables (for testing only, they will be overridden in production)
+ENV POSTGRES_DB=postgres
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres

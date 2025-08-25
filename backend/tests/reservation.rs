@@ -6,8 +6,7 @@ use chrono::NaiveDate;
 use common::create_test_server;
 use deadpool_postgres::{Client, Pool};
 use serde_json::json;
-use testcontainers::ContainerAsync;
-use testcontainers_modules::postgres::Postgres;
+use testcontainers::{ContainerAsync, GenericImage};
 
 async fn add_reservation_request(server: &TestServer) -> Result<TestResponse, anyhow::Error> {
     add_member_request(server).await?; // Necessary since the member ID is a foreign key in reservation
@@ -24,7 +23,7 @@ async fn add_reservation_request(server: &TestServer) -> Result<TestResponse, an
 
 #[tokio::test]
 async fn add_reservation() -> Result<(), anyhow::Error> {
-    let (server, pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_reservation_res: TestResponse = add_reservation_request(&server).await?;
@@ -49,7 +48,7 @@ async fn add_reservation() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn get_reservation() -> Result<(), anyhow::Error> {
-    let (server, _pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, _pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_reservation_res: TestResponse = add_reservation_request(&server).await?;
@@ -74,7 +73,7 @@ async fn get_reservation() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn delete_reservation() -> Result<(), anyhow::Error> {
-    let (server, pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_reservation_res: TestResponse = add_reservation_request(&server).await?;

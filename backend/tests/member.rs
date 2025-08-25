@@ -9,8 +9,7 @@ use common::{add_member_request, create_test_server};
 use deadpool_postgres::{Client, Pool};
 use serde::Deserialize;
 use serde_json::json;
-use testcontainers::ContainerAsync;
-use testcontainers_modules::postgres::Postgres;
+use testcontainers::{ContainerAsync, GenericImage};
 
 #[derive(Deserialize)]
 struct AddMemberResponse {
@@ -20,7 +19,7 @@ struct AddMemberResponse {
 
 #[tokio::test]
 async fn add_member() -> Result<(), anyhow::Error> {
-    let (server, pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
@@ -45,7 +44,7 @@ async fn add_member() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn get_member() -> Result<(), anyhow::Error> {
-    let (server, _pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, _pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
@@ -72,7 +71,7 @@ async fn get_member() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn update_member() -> Result<(), anyhow::Error> {
-    let (server, pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;
@@ -115,7 +114,7 @@ async fn update_member() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn delete_member() -> Result<(), anyhow::Error> {
-    let (server, pool, _container): (TestServer, Pool, ContainerAsync<Postgres>) =
+    let (server, pool, _container): (TestServer, Pool, ContainerAsync<GenericImage>) =
         create_test_server().await?;
 
     let add_member_res: TestResponse = add_member_request(&server).await?;

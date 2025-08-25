@@ -4,13 +4,18 @@ use axum_test::{TestResponse, TestServer};
 use backend::api::app::{AppState, router};
 use deadpool_postgres::{Config, ManagerConfig, Pool, RecyclingMethod, Runtime};
 use serde_json::json;
-use testcontainers_modules::postgres::Postgres;
+use testcontainers::GenericImage;
+use testcontainers::core::{IntoContainerPort, WaitFor};
 use testcontainers_modules::testcontainers::{ContainerAsync, runners::AsyncRunner};
 use tokio_postgres::NoTls;
 
-pub async fn create_test_server() -> Result<(TestServer, Pool, ContainerAsync<Postgres>), Error> {
-    let container = Postgres::default()
-        .with_init_sql(include_str!("../db/init.sql").to_string().into_bytes())
+pub async fn create_test_server() -> Result<(TestServer, Pool, ContainerAsync<GenericImage>), Error>
+{
+    let container = GenericImage::new("postgres-with-pgcron", "latest")
+        .with_exposed_port(5432.tcp())
+        .with_wait_for(WaitFor::message_on_stderr(
+            "database system is ready to accept connections",
+        ))
         .start()
         .await?;
 
