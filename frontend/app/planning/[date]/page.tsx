@@ -183,7 +183,7 @@ export default function PlanningDatePage() {
               </span>
             )
           }
-          return <span>Vous n'avez aucune réservation pour ce jour.</span>
+          return <span>Vous n&apos;avez aucune réservation pour ce jour.</span>
         })()}
       </div>
 
