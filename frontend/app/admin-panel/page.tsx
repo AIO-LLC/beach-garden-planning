@@ -261,7 +261,7 @@ export default function AdminPanelPage() {
               <TableCell>{m.first_name || "-"}</TableCell>
               <TableCell>{m.last_name || "-"}</TableCell>
               <TableCell className="flex gap-2">
-                <span
+                <button
                   className="text-lg text-default-400 cursor-pointer"
                   onClick={() => {
                     setViewMember(m)
@@ -269,13 +269,14 @@ export default function AdminPanelPage() {
                   }}
                 >
                   <LuEye />
-                </span>
-                <span
+                </button>
+                <button
+                  size="sm"
                   className="text-lg text-danger cursor-pointer"
                   onClick={() => deleteMember(m.id)}
                 >
                   <LuTrash2 />
-                </span>
+                </button>
               </TableCell>
             </TableRow>
           ))}
