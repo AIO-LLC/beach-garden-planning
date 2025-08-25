@@ -27,21 +27,23 @@ export default function Home() {
   }, [])
 
   return (
-    <ul>
+    <>
       {!isLoggedIn && (
-        <li>
-          <Link className={buttonStyles({ color: "primary" })} href="/login">
-            Se connecter
-          </Link>
-        </li>
+        <Link
+          className={buttonStyles({ color: "primary" }) + " mt-8"}
+          href="/login"
+        >
+          Se connecter
+        </Link>
       )}
       {isLoggedIn && (
-        <li>
-          <Link className={buttonStyles({ color: "primary" })} href="/planning">
-            Réserver un terrain
-          </Link>
-        </li>
+        <Link
+          className={buttonStyles({ color: "primary" }) + " mt-8"}
+          href="/planning"
+        >
+          Réserver un terrain
+        </Link>
       )}
-    </ul>
+    </>
   )
 }
