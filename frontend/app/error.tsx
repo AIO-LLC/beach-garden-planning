@@ -17,14 +17,14 @@ export default function Error({
 
   return (
     <div>
-      <h2>Something went wrong!</h2>
+      <h2>Une erreur est survenue. Veuillez réessayer plus tard.</h2>
       <button
         onClick={
           // Attempt to recover by trying to re-render the segment
           () => reset()
         }
       >
-        Try again
+        Recharger
       </button>
     </div>
   )
