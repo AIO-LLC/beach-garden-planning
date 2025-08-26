@@ -1,7 +1,6 @@
 import type { NextFetchEvent } from "next/server"
-
 import { NextResponse, NextRequest } from "next/server"
-import { jwtVerify } from "jose"
+import { jwtVerify, type JWTPayload } from "jose"
 
 const authRequiredPaths = [
   "/planning",
@@ -44,7 +43,7 @@ function getJwtSecret(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
-interface JwtClaims {
+interface JwtClaims extends JWTPayload {
   sub: string
   exp: number
   iat: number
@@ -53,11 +52,28 @@ interface JwtClaims {
   is_admin: boolean
 }
 
+// Type guard function for runtime validation
+function isJwtClaims(payload: JWTPayload): payload is JwtClaims {
+  return (
+    typeof payload.sub === "string" &&
+    typeof payload.exp === "number" &&
+    typeof payload.iat === "number" &&
+    typeof payload.phone === "string" &&
+    typeof payload.is_profile_complete === "boolean" &&
+    typeof payload.is_admin === "boolean"
+  )
+}
+
 async function verifyJwt(token: string): Promise<JwtClaims | null> {
   try {
     const { payload } = await jwtVerify(token, getJwtSecret())
 
-    return payload as JwtClaims
+    if (isJwtClaims(payload)) {
+      return payload
+    } else {
+      console.error("JWT payload missing expected custom claims")
+      return null
+    }
   } catch (error) {
     console.error("JWT verification failed:", error)
 

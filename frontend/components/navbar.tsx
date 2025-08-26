@@ -83,22 +83,24 @@ export const Navbar = () => {
             </DropdownTrigger>
             <DropdownMenu aria-label="Profil Actions">
               <DropdownSection showDivider>
-                {isAdmin && (
+                <>
+                  {isAdmin && (
+                    <DropdownItem
+                      key="admin-panel"
+                      onClick={handleAdminPanel}
+                      startContent={<LuShield />}
+                    >
+                      Administration
+                    </DropdownItem>
+                  )}
                   <DropdownItem
-                    key="admin-panel"
-                    onClick={handleAdminPanel}
-                    startContent={<LuShield />}
+                    key="settings"
+                    onClick={handleAccountSettings}
+                    startContent={<LuUser />}
                   >
-                    Administration
+                    Paramètres du compte
                   </DropdownItem>
-                )}
-                <DropdownItem
-                  key="settings"
-                  onClick={handleAccountSettings}
-                  startContent={<LuUser />}
-                >
-                  Paramètres du compte
-                </DropdownItem>
+                </>
               </DropdownSection>
               <DropdownItem
                 key="logout"

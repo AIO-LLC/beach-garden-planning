@@ -22,7 +22,9 @@ export default function LogInPage() {
     e.preventDefault()
 
     var payload = Object.fromEntries(new FormData(e.currentTarget))
-    payload.phone = payload.phone.replace(/\D/g, "")
+    if (typeof payload.phone === "string") {
+      payload.phone = payload.phone.replace(/\D/g, "")
+    }
 
     try {
       const url = `${API_HOST}:${API_PORT}/login`

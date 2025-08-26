@@ -24,6 +24,8 @@ type PhoneInputProps = Omit<
     onChange?: (value: RPNInput.Value | "") => void
     onCountryChange?: (country: Country) => void
     defaultCountry?: Country
+    errorMessage?: string
+    isInvalid?: boolean
   }
 
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =

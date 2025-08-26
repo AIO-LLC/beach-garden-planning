@@ -20,7 +20,7 @@ export default function FirstLoginPage() {
   const capitalizeWords = (value: string): string => {
     let result = ""
     let capitalizeNext = true
-    const separators: [string] = [" ", "-", "'", "."]
+    const separators: string[] = [" ", "-", "'", "."]
 
     for (let i = 0; i < value.length; i++) {
       const char = value[i]
@@ -83,7 +83,7 @@ export default function FirstLoginPage() {
     return null
   }
 
-  const getPasswordConfirmationError = value => {
+  const getPasswordConfirmationError = (value: string) => {
     if (value.length == 0) return null
 
     if (value != password) {

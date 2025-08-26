@@ -1,5 +1,6 @@
 "use client"
 import { Spinner } from "@heroui/react"
+import { useRouter } from "next/navigation"
 
 function getNextTuesdayOrThursday(): string {
   const today = new Date()
@@ -27,8 +28,9 @@ function getNextTuesdayOrThursday(): string {
 }
 
 export default function PlanningPage() {
+  const router = useRouter()
   const defaultDate = getNextTuesdayOrThursday()
-  location.replace(`/planning/${defaultDate}`)
+  router.replace(`/planning/${defaultDate}`)
 
   return (
     <>

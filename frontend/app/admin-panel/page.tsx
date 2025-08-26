@@ -186,7 +186,7 @@ export default function AdminPanelPage() {
         })
       }
 
-      const data: PaginatedResponse<Member> = await res.json()
+      const data: PaginatedResponse = await res.json()
       setMembers(data.items)
       setTotal(data.total_count)
       // setPerPage(data.per_page)
@@ -271,7 +271,6 @@ export default function AdminPanelPage() {
                   <LuEye />
                 </button>
                 <button
-                  size="sm"
                   className="text-lg text-danger cursor-pointer"
                   onClick={() => deleteMember(m.id)}
                 >

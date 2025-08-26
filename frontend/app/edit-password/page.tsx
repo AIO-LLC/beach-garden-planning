@@ -36,7 +36,7 @@ export default function EditPasswordPage() {
     return null
   }
 
-  const getPasswordConfirmationError = value => {
+  const getPasswordConfirmationError = (value: string) => {
     if (value.length == 0) return null
 
     if (value != newPassword) {

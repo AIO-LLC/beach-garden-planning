@@ -22,9 +22,18 @@ type Member = {
   last_name: string
 }
 
+const emptyMember: Member = {
+  id: "",
+  phone: "",
+  password: "",
+  email: "",
+  first_name: "",
+  last_name: ""
+}
+
 export default function AccountPage() {
-  const [originalMember, setOriginalMember] = useState<Member | null>(null)
-  const [member, setMember] = useState<Member | null>(null)
+  const [originalMember, setOriginalMember] = useState<Member>(emptyMember)
+  const [member, setMember] = useState<Member>(emptyMember)
 
   const capitalizeWords = (value: string): string => {
     let result = ""
@@ -50,31 +59,31 @@ export default function AccountPage() {
     return result
   }
 
-  const getPhoneError = (value: string): string | null => {
+  const getPhoneError = (value: string): string => {
     if (value.length === 0) return "Le numéro de téléphone est requis."
     if (value.length < 10 || value.length > 15)
       return "Le numéro de téléphone est invalide."
-    return null
+    return ""
   }
 
-  const getFirstNameError = (value: string): string | null => {
+  const getFirstNameError = (value: string): string => {
     if (value.trim().length === 0) return "Le prénom est requis."
-    return null
+    return ""
   }
 
-  const getLastNameError = (value: string): string | null => {
+  const getLastNameError = (value: string): string => {
     if (value.trim().length === 0) return "Le nom est requis."
-    return null
+    return ""
   }
 
-  const getEmailError = (value: string): string | null => {
+  const getEmailError = (value: string): string => {
     if (value.length === 0) return "L'adresse email est requise."
 
     if (!EmailValidator.validate(value)) {
       return "L'adresse email est invalide."
     }
 
-    return null
+    return ""
   }
 
   const isFormValid = (): boolean => {
@@ -85,7 +94,12 @@ export default function AccountPage() {
     const lastNameError = getLastNameError(member.last_name)
     const emailError = getEmailError(member.email)
 
-    return !phoneError && !firstNameError && !lastNameError && !emailError
+    return (
+      phoneError === "" &&
+      firstNameError === "" &&
+      lastNameError === "" &&
+      emailError === ""
+    )
   }
 
   const hasValuesChanged = (): boolean => {
@@ -102,10 +116,10 @@ export default function AccountPage() {
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const phoneError: string | null = getPhoneError(member.phone)
-    const firstNameError: string | null = getFirstNameError(member.first_name)
-    const lastNameError: string | null = getLastNameError(member.last_name)
-    const emailError: string | null = getEmailError(member.email)
+    const phoneError: string = getPhoneError(member.phone)
+    const firstNameError: string = getFirstNameError(member.first_name)
+    const lastNameError: string = getLastNameError(member.last_name)
+    const emailError: string = getEmailError(member.email)
 
     // If any validation errors, don't submit
     if (!isFormValid) {
@@ -117,7 +131,9 @@ export default function AccountPage() {
     }
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
-    data.phone = data.phone.replace(/\D/g, "")
+    if (typeof data.phone === "string") {
+      data.phone = data.phone.replace(/\D/g, "")
+    }
 
     const getJwtClaimsResponse = await fetch(
       `${API_HOST}:${API_PORT}/jwt-claims`,
@@ -215,15 +231,16 @@ export default function AccountPage() {
       const { id, _phone, _is_profile_complete } = claims
 
       getMemberData(id).then(memberData => {
-        memberData.phone = "+" + memberData.phone
-        console.log(memberData)
-        setMember(memberData)
-        setOriginalMember(memberData)
+        if (memberData !== null) {
+          memberData.phone = "+" + memberData.phone
+          setMember(memberData)
+          setOriginalMember(memberData)
+        }
       })
     })
   }, [])
 
-  if (!member) {
+  if (member.first_name === "") {
     return (
       <>
         <Spinner className="mt-8" size="lg" />
@@ -243,7 +260,7 @@ export default function AccountPage() {
         <span className="text-sm">Numéro de téléphone</span>
         <PhoneInput
           errorMessage={getPhoneError(member.phone)}
-          isInvalid={getPhoneError(member.phone) !== null}
+          isInvalid={getPhoneError(member.phone) !== ""}
           name="phone"
           value={member.phone}
           onChange={newValue => {
@@ -256,7 +273,7 @@ export default function AccountPage() {
 
         <Input
           errorMessage={getFirstNameError(member.first_name)}
-          isInvalid={getFirstNameError(member.first_name) !== null}
+          isInvalid={getFirstNameError(member.first_name) !== ""}
           label="Prénom"
           labelPlacement="outside"
           name="first_name"
@@ -272,7 +289,7 @@ export default function AccountPage() {
 
         <Input
           errorMessage={getLastNameError(member.last_name)}
-          isInvalid={getLastNameError(member.last_name) !== null}
+          isInvalid={getLastNameError(member.last_name) !== ""}
           label="Nom"
           labelPlacement="outside"
           name="last_name"
@@ -287,7 +304,7 @@ export default function AccountPage() {
         />
         <Input
           errorMessage={getEmailError(member.email)}
-          isInvalid={getEmailError(member.email) !== null}
+          isInvalid={getEmailError(member.email) !== ""}
           label="Adresse email"
           labelPlacement="outside"
           name="email"
