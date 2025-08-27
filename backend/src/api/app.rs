@@ -33,13 +33,15 @@ pub async fn build_state() -> AppState {
         env::var("POSTGRES_DB").expect("Undefined POSTGRES_DB environment variable");
     let postgres_password: String =
         env::var("POSTGRES_PASSWORD").expect("Undefined POSTGRES_PASSWORD environment variable");
+    let postgres_host: String =
+        env::var("POSTGRES_HOST").expect("Undefined POSTGRES_HOST environment variable");
     let postgres_port: u16 = str::parse(
         &env::var("POSTGRES_PORT").expect("Undefined POSTGRES_PORT environment variable"),
     )
     .unwrap();
 
     let mut cfg = deadpool_postgres::Config::new();
-    cfg.host = Some("localhost".into());
+    cfg.host = Some(postgres_host);
     cfg.user = Some(postgres_user);
     cfg.dbname = Some(postgres_db);
     cfg.password = Some(postgres_password);
