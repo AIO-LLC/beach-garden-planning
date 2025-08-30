@@ -12,3 +12,6 @@ Book beach tennis courts at the Beach Garden.
    ```bash
    pre-commit install --hook-type commit-msg
    ```
+3. [Download the US East (N. Virginia) certificate bundle for Amazon RDS](https://truststore.pki.rds.amazonaws.com/us-east-1/us-east-1-bundle.pem)
+
+4. Create a `certs` folder in the `backend` directory and put the freshly downloaded certificate bundle in the `certs` folder.
