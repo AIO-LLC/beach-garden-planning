@@ -3,7 +3,7 @@ use crate::api::wrappers;
 use axum::http::header::CONTENT_TYPE;
 use axum::{
     Json,
-    http::{HeaderValue, Method, StatusCode},
+    http::{Method, StatusCode},
     response::{IntoResponse, Response},
     routing::patch,
 };
@@ -14,14 +14,39 @@ use axum::{
 use deadpool_postgres;
 use deadpool_postgres::{ManagerConfig, Pool, RecyclingMethod, Runtime};
 use dotenvy::dotenv;
+use rustls::RootCertStore;
 use std::env;
+use std::io::BufReader;
 use thiserror::Error;
-use tokio_postgres::NoTls;
+use tokio_postgres_rustls::MakeRustlsConnect;
 use tower_http::cors::CorsLayer;
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool,
+}
+
+const RDS_CA_CERT: &[u8] = include_bytes!("../../certs/us-east-1-bundle.pem");
+
+fn create_rds_connector() -> MakeRustlsConnect {
+    let mut root_store = RootCertStore::empty();
+
+    // Parse the PEM certificates
+    let mut pem = BufReader::new(RDS_CA_CERT);
+    let certs = rustls_pemfile::certs(&mut pem);
+
+    // Add certificates to the root store
+    for cert in certs {
+        root_store
+            .add(cert.expect("Failed to parse PEM file"))
+            .expect("Failed to add certificate");
+    }
+
+    let config = rustls::ClientConfig::builder()
+        .with_root_certificates(root_store)
+        .with_no_client_auth();
+
+    MakeRustlsConnect::new(config)
 }
 
 pub async fn build_state() -> AppState {
@@ -49,8 +74,10 @@ pub async fn build_state() -> AppState {
     cfg.manager = Some(ManagerConfig {
         recycling_method: RecyclingMethod::Fast,
     });
+    cfg.ssl_mode = Some(deadpool_postgres::SslMode::Require);
 
-    let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls).unwrap();
+    let connector = create_rds_connector();
+    let pool = cfg.create_pool(Some(Runtime::Tokio1), connector).unwrap();
     AppState { pool }
 }
 
@@ -124,19 +151,15 @@ impl IntoResponse for ApiError {
 
 pub async fn router(app_state: AppState) -> Router {
     dotenv().ok();
-    let api_ip: &str = &env::var("API_IP").unwrap_or("0.0.0.0".to_string());
     let cors = CorsLayer::new()
-        .allow_origin(
-            HeaderValue::from_str(&format!("http://{api_ip}:3000")).expect("Invalid origin header"),
-        )
+        .allow_origin(tower_http::cors::Any)
         .allow_methods(vec![
             Method::GET,
             Method::POST,
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers([CONTENT_TYPE])
-        .allow_credentials(true);
+        .allow_headers([CONTENT_TYPE]);
 
     Router::new()
         // Member routes
