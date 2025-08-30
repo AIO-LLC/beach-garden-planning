@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 // Separate the component that uses useSearchParams
 function PasswordResetForm() {
@@ -61,7 +62,7 @@ function PasswordResetForm() {
     e.preventDefault()
     try {
       const payload = { token, email, new_password: newPassword }
-      const url = `${API_HOST}:${API_PORT}/password-reset`
+      const url = `${API_URL}/password-reset`
       const editPasswordResponse = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

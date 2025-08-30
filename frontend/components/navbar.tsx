@@ -16,7 +16,8 @@ import NextLink from "next/link"
 import NextImage from "next/image"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
@@ -25,13 +26,10 @@ export const Navbar = () => {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const getJwtClaimsResponse = await fetch(
-          `${API_HOST}:${API_PORT}/jwt-claims`,
-          {
-            method: "GET",
-            credentials: "include"
-          }
-        )
+        const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+          method: "GET",
+          credentials: "include"
+        })
 
         if (getJwtClaimsResponse.ok) {
           const claims = await getJwtClaimsResponse.json()
@@ -55,7 +53,7 @@ export const Navbar = () => {
   }
 
   const handleLogout = async () => {
-    await fetch(`${API_HOST}:${API_PORT}/logout`, {
+    await fetch(`${API_URL}/logout`, {
       method: "POST",
       credentials: "include"
     })

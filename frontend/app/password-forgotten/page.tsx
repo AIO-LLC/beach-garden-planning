@@ -7,7 +7,8 @@ import * as EmailValidator from "email-validator"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function PasswordForgottenPage() {
   const [email, setEmail] = React.useState("")
@@ -33,7 +34,7 @@ export default function PasswordForgottenPage() {
 
     try {
       const payload = { email }
-      const url = `${API_HOST}:${API_PORT}/password-forgotten`
+      const url = `${API_URL}/password-forgotten`
       const passwordForgottenResponse = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -7,7 +7,8 @@ import * as EmailValidator from "email-validator"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function FirstLoginPage() {
   const [firstName, setFirstName] = React.useState<string>("")
@@ -115,13 +116,10 @@ export default function FirstLoginPage() {
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
-    const getJwtClaimsResponse = await fetch(
-      `${API_HOST}:${API_PORT}/jwt-claims`,
-      {
-        method: "GET",
-        credentials: "include"
-      }
-    )
+    const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+      method: "GET",
+      credentials: "include"
+    })
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
@@ -143,7 +141,7 @@ export default function FirstLoginPage() {
     console.log(payload)
 
     try {
-      const url = `${API_HOST}:${API_PORT}/member-with-password`
+      const url = `${API_URL}/member-with-password`
       const response = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -154,15 +152,12 @@ export default function FirstLoginPage() {
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
         const refreshJwtPayload = { member_id: id }
-        const refreshResponse = await fetch(
-          `${API_HOST}:${API_PORT}/refresh-jwt`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify(refreshJwtPayload)
-          }
-        )
+        const refreshResponse = await fetch(`${API_URL}/refresh-jwt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(refreshJwtPayload)
+        })
 
         if (refreshResponse.ok) {
           // Token refreshed successfully, redirect to planning

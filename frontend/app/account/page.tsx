@@ -11,7 +11,8 @@ import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 type Member = {
   id: string
@@ -135,13 +136,10 @@ export default function AccountPage() {
       data.phone = data.phone.replace(/\D/g, "")
     }
 
-    const getJwtClaimsResponse = await fetch(
-      `${API_HOST}:${API_PORT}/jwt-claims`,
-      {
-        method: "GET",
-        credentials: "include"
-      }
-    )
+    const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+      method: "GET",
+      credentials: "include"
+    })
 
     if (!getJwtClaimsResponse.ok) {
       const { error } = await getJwtClaimsResponse.json()
@@ -162,7 +160,7 @@ export default function AccountPage() {
     }
 
     try {
-      const url = `${API_HOST}:${API_PORT}/member`
+      const url = `${API_URL}/member`
       const response = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -193,13 +191,10 @@ export default function AccountPage() {
 
   useEffect(() => {
     const getJwt = async () => {
-      const getJwtClaimsResponse = await fetch(
-        `${API_HOST}:${API_PORT}/jwt-claims`,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      )
+      const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+        method: "GET",
+        credentials: "include"
+      })
 
       if (!getJwtClaimsResponse.ok) {
         const { error } = await getJwtClaimsResponse.json()
@@ -213,7 +208,7 @@ export default function AccountPage() {
     }
 
     const getMemberData = async (id: string): Promise<Member | null> => {
-      const response = await fetch(`${API_HOST}:${API_PORT}/member/${id}`, {
+      const response = await fetch(`${API_URL}/member/${id}`, {
         method: "GET",
         credentials: "include"
       })

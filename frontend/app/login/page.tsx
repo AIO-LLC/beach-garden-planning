@@ -7,7 +7,8 @@ import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function LogInPage() {
   const [phone, setPhone] = useState<string>("")
@@ -27,7 +28,7 @@ export default function LogInPage() {
     }
 
     try {
-      const url = `${API_HOST}:${API_PORT}/login`
+      const url = `${API_URL}/login`
       const loginResponse = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

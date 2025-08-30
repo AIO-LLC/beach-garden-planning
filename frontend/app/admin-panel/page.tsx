@@ -30,7 +30,8 @@ import {
 } from "@heroui/modal"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 interface Member {
   id: string
@@ -122,7 +123,7 @@ export default function AdminPanelPage() {
     }
 
     try {
-      const res = await fetch(`${API_HOST}:${API_PORT}/member`, {
+      const res = await fetch(`${API_URL}/member`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -173,7 +174,7 @@ export default function AdminPanelPage() {
   async function load() {
     try {
       const res = await fetch(
-        `${API_HOST}:${API_PORT}/members?page=${page}&per_page=${perPage}`,
+        `${API_URL}/members?page=${page}&per_page=${perPage}`,
         { credentials: "include" }
       )
       if (!res.ok) {
@@ -210,7 +211,7 @@ export default function AdminPanelPage() {
   const deleteMember = async (id: string) => {
     if (!confirm("Supprimer ce membre ?")) return
     try {
-      const res = await fetch(`${API_HOST}:${API_PORT}/member/${id}`, {
+      const res = await fetch(`${API_URL}/member/${id}`, {
         method: "DELETE",
         credentials: "include"
       })

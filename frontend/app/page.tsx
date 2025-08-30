@@ -5,7 +5,8 @@ import { Link } from "@heroui/link"
 import { button as buttonStyles } from "@heroui/theme"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
@@ -13,7 +14,7 @@ export default function Home() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+        const res = await fetch(`${API_URL}/jwt-claims`, {
           method: "GET",
           credentials: "include"
         })

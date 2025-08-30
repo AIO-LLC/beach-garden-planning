@@ -19,7 +19,8 @@ type Reservation = {
 }
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 function getAvailableDates(): { tuesday: string; thursday: string } {
   const today = new Date()
@@ -88,7 +89,7 @@ export default function PlanningDatePage() {
 
     async function fetchData() {
       try {
-        const res = await fetch(`${API_HOST}:${API_PORT}/jwt-claims`, {
+        const res = await fetch(`${API_URL}/jwt-claims`, {
           method: "GET",
           credentials: "include"
         })
@@ -99,10 +100,10 @@ export default function PlanningDatePage() {
       } catch {}
 
       try {
-        const res2 = await fetch(
-          `${API_HOST}:${API_PORT}/reservations/${date}`,
-          { method: "GET", credentials: "include" }
-        )
+        const res2 = await fetch(`${API_URL}/reservations/${date}`, {
+          method: "GET",
+          credentials: "include"
+        })
         if (res2.ok) {
           setReservations(await res2.json())
         }
@@ -225,7 +226,7 @@ export default function PlanningDatePage() {
                               size="sm"
                               onClick={async () => {
                                 await fetch(
-                                  `${API_HOST}:${API_PORT}/reservation/${res.id}`,
+                                  `${API_URL}/reservation/${res.id}`,
                                   {
                                     method: "DELETE",
                                     credentials: "include"
@@ -236,7 +237,7 @@ export default function PlanningDatePage() {
                                 })
                                 const refreshed = await (
                                   await fetch(
-                                    `${API_HOST}:${API_PORT}/reservations/${date}`,
+                                    `${API_URL}/reservations/${date}`,
                                     { credentials: "include" }
                                   )
                                 ).json()
@@ -259,32 +260,28 @@ export default function PlanningDatePage() {
                             color="primary"
                             size="sm"
                             onClick={async () => {
-                              await fetch(
-                                `${API_HOST}:${API_PORT}/reservation`,
-                                {
-                                  method: "POST",
-                                  credentials: "include",
-                                  headers: {
-                                    "Content-Type": "application/json"
-                                  },
-                                  body: JSON.stringify({
-                                    id: "",
-                                    member_id: currentUserId,
-                                    court_number: court,
-                                    reservation_date: date,
-                                    reservation_time: hour
-                                  })
-                                }
-                              )
+                              await fetch(`${API_URL}/reservation`, {
+                                method: "POST",
+                                credentials: "include",
+                                headers: {
+                                  "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                  id: "",
+                                  member_id: currentUserId,
+                                  court_number: court,
+                                  reservation_date: date,
+                                  reservation_time: hour
+                                })
+                              })
                               addToast({
                                 title: "Votre réservation a été enregistrée.",
                                 color: "success"
                               })
                               const refreshed = await (
-                                await fetch(
-                                  `${API_HOST}:${API_PORT}/reservations/${date}`,
-                                  { credentials: "include" }
-                                )
+                                await fetch(`${API_URL}/reservations/${date}`, {
+                                  credentials: "include"
+                                })
                               ).json()
                               setReservations(refreshed)
                             }}

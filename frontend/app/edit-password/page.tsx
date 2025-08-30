@@ -6,7 +6,8 @@ import { Form, Input, Button, addToast } from "@heroui/react"
 import { title } from "@/components/primitives"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
-const API_PORT = process.env.NEXT_PUBLIC_API_PORT!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function EditPasswordPage() {
   const [password, setPassword] = React.useState<string>("")
@@ -64,13 +65,10 @@ export default function EditPasswordPage() {
     e.preventDefault()
 
     try {
-      const getJwtClaimsResponse = await fetch(
-        `${API_HOST}:${API_PORT}/jwt-claims`,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      )
+      const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+        method: "GET",
+        credentials: "include"
+      })
 
       if (!getJwtClaimsResponse.ok) {
         const { error } = await getJwtClaimsResponse.json()
@@ -88,7 +86,7 @@ export default function EditPasswordPage() {
         new_password: newPassword
       }
 
-      const url = `${API_HOST}:${API_PORT}/password`
+      const url = `${API_URL}/password`
       const editPasswordResponse = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
