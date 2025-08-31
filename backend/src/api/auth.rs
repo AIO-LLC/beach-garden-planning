@@ -65,6 +65,7 @@ pub async fn login(
         StatusCode::OK,
         Json(json!({
             "message": "Login successful",
+            "cookie": cookie,
             "is_profile_complete": is_profile_complete
         })),
     )

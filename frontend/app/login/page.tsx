@@ -47,10 +47,8 @@ export default function LogInPage() {
         return
       }
 
-      console.log("Response headers:", loginResponse.headers);
-      console.log("Set-Cookie header:", loginResponse.headers.get('set-cookie'));
-      console.log("Document cookies after login:", document.cookie);
-      const { is_profile_complete } = await loginResponse.json()
+      const { is_profile_complete, cookie } = await loginResponse.json()
+      document.cookie = cookie
 
       if (is_profile_complete) {
         location.replace("/planning")

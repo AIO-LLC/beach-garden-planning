@@ -87,12 +87,12 @@ export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
   // Debug logging
   console.log("Middleware executing for:", pathname)
   console.log("JWT_SECRET available:", !!process.env.JWT_SECRET)
-  console.log("Cookie header:", req.headers.get('cookie'))
-  
+  console.log("Cookie header:", req.headers.get("cookie"))
+
   const token = req.cookies.get("auth_token")?.value
   console.log("Token found:", !!token)
   console.log("Token value (first 20 chars):", token?.substring(0, 20))
-  
+
   const claims = token ? await verifyJwt(token) : null
   console.log("Claims verified:", !!claims)
   console.log("Claims content:", claims)
