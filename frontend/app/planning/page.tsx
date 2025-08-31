@@ -1,6 +1,7 @@
 "use client"
 import { Spinner } from "@heroui/react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 
 function getNextTuesdayOrThursday(): string {
   const today = new Date()
@@ -28,6 +29,7 @@ function getNextTuesdayOrThursday(): string {
 }
 
 export default function PlanningPage() {
+  const auth = useAuth({ requireAuth: true, requireProfile: true })
   const router = useRouter()
   const defaultDate = getNextTuesdayOrThursday()
   router.replace(`/planning/${defaultDate}`)

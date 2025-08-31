@@ -7,6 +7,7 @@ import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { title } from "@/components/primitives"
+import { useAuth } from "@/hooks/useAuth"
 
 type Reservation = {
   id: string
@@ -65,6 +66,7 @@ function getDefaultDate(): string {
 }
 
 export default function PlanningDatePage() {
+  const auth = useAuth({ requireAuth: true, requireProfile: true })
   const { date } = useParams() as { date?: string }
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
@@ -130,13 +132,14 @@ export default function PlanningDatePage() {
 
   if (!displayDate) return null
 
-  if (!reservations) {
+  if (!reservations || auth.isLoading) {
     return (
       <>
         <Spinner className="mt-8" size="lg" />
       </>
     )
   }
+
   return (
     <div>
       <h1 className="font-bold text-xl my-4">Planning</h1>
