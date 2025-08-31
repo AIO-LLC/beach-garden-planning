@@ -1,5 +1,6 @@
 "use client"
 
+import { Spinner } from "@heroui/react"
 import { useState, useEffect } from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
@@ -65,6 +66,14 @@ export default function LogInPage() {
         color: "danger"
       })
     }
+  }
+
+  if (auth.isLoading) {
+    return (
+      <>
+        <Spinner className="mt-8" size="lg" />
+      </>
+    )
   }
 
   return (

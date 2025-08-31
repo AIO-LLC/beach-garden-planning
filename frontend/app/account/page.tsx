@@ -237,7 +237,7 @@ export default function AccountPage() {
     })
   }, [])
 
-  if (member.first_name === "") {
+  if (member.first_name === "" || auth.isLoading) {
     return (
       <>
         <Spinner className="mt-8" size="lg" />
