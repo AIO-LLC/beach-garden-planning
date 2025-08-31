@@ -97,8 +97,6 @@ export async function middleware(req: NextRequest, _ev: NextFetchEvent) {
   console.log("Claims verified:", !!claims)
   console.log("Claims content:", claims)
 
-  const token = req.cookies.get("auth_token")?.value
-  const claims = token ? await verifyJwt(token) : null
   const loggedIn = !!claims
   const complete = !!claims?.is_profile_complete
   const isAdmin = !!claims?.is_admin
