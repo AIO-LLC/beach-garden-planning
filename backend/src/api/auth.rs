@@ -147,7 +147,26 @@ pub async fn password_forgotten(
         env::var("SMTP_PASSWORD").expect("Undefined SMTP_PASSWORD environment variable");
     let smtp_sender: String =
         env::var("SMTP_SENDER").expect("Undefined SMTP_SENDER environment variable");
-    let api_ip: &str = &env::var("API_IP").unwrap_or("0.0.0.0".to_string());
+
+    let base_url: String;
+
+    #[cfg(feature = "local")]
+    {
+        let frontend_ip: &str =
+            &env::var("FRONTEND_IP").expect("Undefined FRONTEND_IP environment variable");
+        let frontend_port: u16 = str::parse(
+            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable"),
+        );
+        base_url = format!("http://{frontend_ip}:{frontend_port}");
+    }
+
+    #[cfg(not(feature = "local"))]
+    {
+        let public_url: &str =
+            &env::var("PUBLIC_URL").expect("Undefined PUBLIC_URL environment variable");
+
+        base_url = public_url.to_string();
+    }
 
     let email_service = EmailService::new(&smtp_server, &smtp_user, &smtp_password, &smtp_sender);
 
@@ -165,7 +184,7 @@ pub async fn password_forgotten(
             &payload.email,
             &member.first_name.unwrap(),
             &token,
-            &format!("http://{api_ip}:3000/password-reset"),
+            &format!("{base_url}/password-reset"),
         )
         .await
     {
