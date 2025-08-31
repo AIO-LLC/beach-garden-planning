@@ -1,5 +1,6 @@
 use crate::api::auth;
 use crate::api::wrappers;
+use axum::http::HeaderValue;
 use axum::http::header::CONTENT_TYPE;
 use axum::{
     Json,
@@ -65,6 +66,7 @@ pub async fn build_state() -> AppState {
     )
     .unwrap();
 
+    // TODO: separate local & public environment for db connection
     let mut cfg = deadpool_postgres::Config::new();
     cfg.host = Some(postgres_host);
     cfg.user = Some(postgres_user);
@@ -85,21 +87,20 @@ pub async fn build_state() -> AppState {
 pub enum ApiError {
     #[error("database error")]
     Db(#[from] tokio_postgres::Error),
-
     #[error("pool error")]
     Pool(#[from] deadpool_postgres::PoolError),
-
     #[error("not found")]
     NotFound,
-
     #[error("unauthorized")]
     WrongCredentials,
-
     #[error("unprocessable entity")]
     NewPasswordMustBeDifferent,
-
     #[error("gone")]
     TokenExpired,
+    #[error("bad request")]
+    MissingAuthToken,
+    #[error("unauthorized")]
+    InvalidAuthToken,
 }
 
 impl IntoResponse for ApiError {
@@ -144,6 +145,14 @@ impl IntoResponse for ApiError {
                 "New password must be different from the current password".to_string(),
             ),
             ApiError::TokenExpired => (StatusCode::GONE, "Token expired".to_string()),
+            ApiError::MissingAuthToken => (
+                StatusCode::BAD_REQUEST,
+                "Authentication token required".to_string(),
+            ),
+            ApiError::InvalidAuthToken => (
+                StatusCode::UNAUTHORIZED,
+                "Invalid authentication token".to_string(),
+            ),
         };
         (status, Json(serde_json::json!({ "error": msg }))).into_response()
     }
@@ -151,15 +160,38 @@ impl IntoResponse for ApiError {
 
 pub async fn router(app_state: AppState) -> Router {
     dotenv().ok();
-    let cors = CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
+    let mut cors = CorsLayer::new();
+
+    #[cfg(feature = "local")]
+    {
+        let frontend_ip: &str =
+            &env::var("FRONTEND_IP").expect("Undefined FRONTEND_IP environment variable");
+        let frontend_port: u16 = str::parse(
+            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable"),
+        )
+        .unwrap();
+        cors = cors.allow_origin(
+            HeaderValue::from_str(&format!("http://{frontend_ip}:{frontend_port}"))
+                .expect("Invalid origin header"),
+        );
+    }
+
+    #[cfg(not(feature = "local"))]
+    {
+        let public_url: &str =
+            &env::var("PUBLIC_URL").expect("Undefined PUBLIC_URL environment variable");
+        cors = cors.allow_origin(HeaderValue::from_str(public_url).expect("Invalid origin header"));
+    }
+
+    cors = cors
         .allow_methods(vec![
             Method::GET,
             Method::POST,
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers([CONTENT_TYPE]);
+        .allow_headers([CONTENT_TYPE])
+        .allow_credentials(true);
 
     Router::new()
         // Member routes

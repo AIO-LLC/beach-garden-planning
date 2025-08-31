@@ -51,13 +51,15 @@ pub async fn login(
     )
     .expect("Could not create JWT.");
 
-    let flags = if cfg!(debug_assertions) {
-        ""
+    let cookie = if cfg!(debug_assertions) {
+        // Development configuration
+        format!("auth_token={token}; HttpOnly; SameSite=Lax; Max-Age=86400; Path=/")
     } else {
-        "; Secure"
+        // Production configuration
+        format!("auth_token={token}; HttpOnly; SameSite=None; Secure; Max-Age=86400; Path=/")
     };
-    let cookie =
-        format!("auth_token={token}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
+
+    tracing::info!("Setting cookie: {}", cookie);
 
     let mut response = (
         StatusCode::OK,
@@ -76,12 +78,11 @@ pub async fn login(
 }
 
 pub async fn logout() -> impl IntoResponse {
-    let flags = if cfg!(debug_assertions) {
-        ""
+    let cookie = if cfg!(debug_assertions) {
+        "auth_token=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
     } else {
-        "; Secure"
+        "auth_token=; HttpOnly; SameSite=None; Secure; Max-Age=0; Path=/"
     };
-    let cookie = format!("auth_token=; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
 
     (
         StatusCode::NO_CONTENT,
@@ -94,9 +95,29 @@ pub async fn get_jwt_claims(
     State(_state): State<AppState>,
     jar: CookieJar,
 ) -> Result<impl IntoResponse, ApiError> {
-    let token = jar.get("auth_token").ok_or(ApiError::NotFound)?.value();
+    // Check if auth_token cookie exists
+    let token = match jar.get("auth_token") {
+        Some(cookie) => cookie.value(),
+        None => return Err(ApiError::MissingAuthToken),
+    };
 
-    let claims = verify_jwt(token).map_err(|_| ApiError::NotFound)?;
+    // Verify and decode the JWT
+    let claims = match verify_jwt(token) {
+        Ok(claims) => claims,
+        Err(jwt_error) => match jwt_error.kind() {
+            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                return Err(ApiError::TokenExpired);
+            }
+            jsonwebtoken::errors::ErrorKind::InvalidToken
+            | jsonwebtoken::errors::ErrorKind::InvalidSignature => {
+                return Err(ApiError::InvalidAuthToken);
+            }
+            _ => {
+                tracing::error!("JWT verification error: {}", jwt_error);
+                return Err(ApiError::WrongCredentials);
+            }
+        },
+    };
 
     Ok(Json(json!({
         "id": claims.sub,
@@ -187,13 +208,11 @@ pub async fn refresh_jwt(
     .expect("Could not create JWT.");
 
     // Set the new token in cookies
-    let flags = if cfg!(debug_assertions) {
-        ""
+    let cookie = if cfg!(debug_assertions) {
+        format!("auth_token={new_token}; HttpOnly; SameSite=Lax; Max-Age=86400; Path=/")
     } else {
-        "; Secure"
+        format!("auth_token={new_token}; HttpOnly; SameSite=None; Secure; Max-Age=86400; Path=/")
     };
-    let cookie =
-        format!("auth_token={new_token}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/{flags}");
 
     let mut response = (
         StatusCode::OK,
