@@ -28,6 +28,7 @@ import {
   ModalBody,
   ModalFooter
 } from "@heroui/modal"
+import { useAuth } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -52,6 +53,11 @@ interface PaginatedResponse {
 }
 
 export default function AdminPanelPage() {
+  const auth = useAuth({
+    requireAuth: true,
+    requireProfile: true,
+    requireAdmin: true
+  })
   const {
     isOpen: isCreateOpen,
     onOpen: openCreate,

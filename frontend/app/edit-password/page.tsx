@@ -4,12 +4,14 @@ import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 
 import { title } from "@/components/primitives"
+import { useAuth } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
 const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function EditPasswordPage() {
+  const auth = useAuth({ requireAuth: true, requireProfile: true })
   const [password, setPassword] = React.useState<string>("")
   const [newPassword, setNewPassword] = React.useState<string>("")
   const [newPasswordConfirmation, setNewPasswordConfirmation] =

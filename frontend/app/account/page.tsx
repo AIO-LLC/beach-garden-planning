@@ -9,6 +9,7 @@ import * as EmailValidator from "email-validator"
 
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
+import { useAuth } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -33,6 +34,7 @@ const emptyMember: Member = {
 }
 
 export default function AccountPage() {
+  const auth = useAuth({ requireAuth: true, requireProfile: true })
   const [originalMember, setOriginalMember] = useState<Member>(emptyMember)
   const [member, setMember] = useState<Member>(emptyMember)
 

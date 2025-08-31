@@ -5,12 +5,14 @@ import { Form, Input, Button, addToast } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
 import { title } from "@/components/primitives"
+import { useAuth } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
 const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function PasswordForgottenPage() {
+  const auth = useAuth({ redirectTo: "/planning" })
   const [email, setEmail] = React.useState("")
 
   const getEmailError = (value: string): string | null => {

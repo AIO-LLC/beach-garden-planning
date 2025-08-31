@@ -5,12 +5,14 @@ import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
+import { useAuth } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
 const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function LogInPage() {
+  const auth = useAuth({ redirectTo: "/planning" })
   const [phone, setPhone] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [isInvalid, setIsInvalid] = useState<boolean>(false)
