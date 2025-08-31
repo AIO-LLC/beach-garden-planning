@@ -46,6 +46,9 @@ export default function LogInPage() {
         // TODO: Update response from backend when unknown phone number or wrong password, and show a toast with another error message for server errors or others
         return
       }
+
+      console.log("Response headers:", loginResponse.headers);
+      console.log("Set-Cookie header:", loginResponse.headers.get('set-cookie'));
       console.log("Document cookies after login:", document.cookie);
       const { is_profile_complete } = await loginResponse.json()
 
