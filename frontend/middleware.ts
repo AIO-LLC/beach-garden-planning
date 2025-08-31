@@ -62,6 +62,8 @@ async function getJwtClaims(req: NextRequest): Promise<JwtClaims | null> {
       const claims = await response.json()
       return claims as JwtClaims
     }
+    const reponse = await response.json()
+    console.error(response)
     return null
   } catch (error) {
     console.error("Failed to get JWT claims:", error)
