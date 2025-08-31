@@ -3,6 +3,7 @@
 import React from "react"
 import { Form, Input, Button, addToast } from "@heroui/react"
 
+import { Spinner } from "@heroui/react"
 import { title } from "@/components/primitives"
 import { useAuth } from "@/hooks/useAuth"
 
@@ -122,6 +123,14 @@ export default function EditPasswordPage() {
         color: "danger"
       })
     }
+  }
+
+  if (auth.isLoading) {
+    return (
+      <>
+        <Spinner className="mt-8" size="lg" />
+      </>
+    )
   }
 
   return (

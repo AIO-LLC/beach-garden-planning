@@ -237,7 +237,7 @@ export default function AdminPanelPage() {
     openView()
   }
 
-  if (members.length === 0) {
+  if (members.length === 0 || auth.isLoading) {
     return (
       <>
         <Spinner className="mt-8" size="lg" />
