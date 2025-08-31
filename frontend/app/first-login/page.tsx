@@ -12,6 +12,7 @@ const API_PORT = process.env.NEXT_PUBLIC_API_PORT
 const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function FirstLoginPage() {
+  const auth = useAuth({ requireAuth: true })
   const [firstName, setFirstName] = React.useState<string>("")
   const [lastName, setLastName] = React.useState<string>("")
   const [email, setEmail] = React.useState<string>("")
