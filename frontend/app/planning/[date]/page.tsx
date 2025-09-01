@@ -2,7 +2,7 @@
 
 import { Spinner } from "@heroui/react"
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
@@ -66,7 +66,8 @@ function getDefaultDate(): string {
 }
 
 export default function PlanningDatePage() {
-  const auth = useAuth({ requireAuth: true, requireProfile: true })
+  const router = useRouter()
+  const auth = useAuth({ requireAuth: true, requireProfile: true, redirectTo: "/"})
   const { date } = useParams() as { date?: string }
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
@@ -76,7 +77,7 @@ export default function PlanningDatePage() {
 
   useEffect(() => {
     if (!date || !isValidPlanningDate(date)) {
-      location.replace(`/planning/${getDefaultDate()}`)
+      router.replace(`/planning/${getDefaultDate()}`)
       return
     }
     const [y, m, d] = date.split("-").map(Number)
@@ -127,7 +128,7 @@ export default function PlanningDatePage() {
   const isSecond = date === thursday
 
   async function navTo(target: string) {
-    location.replace(`/planning/${target}`)
+    router.push(`/planning/${target}`)
   }
 
   if (!displayDate) return null

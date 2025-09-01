@@ -7,12 +7,14 @@ import { Link } from "@heroui/link"
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
 const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function LogInPage() {
+  const router = useRouter()
   const auth = useAuth({ redirectTo: "/planning" })
   const [phone, setPhone] = useState<string>("")
   const [password, setPassword] = useState<string>("")
@@ -53,13 +55,10 @@ export default function LogInPage() {
       const { is_profile_complete, cookie } = await loginResponse.json()
       document.cookie = cookie
 
-      // Add a small delay to ensure cookie is set, especially on mobile
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
       if (is_profile_complete) {
-        location.replace("/planning")
+        router.push("/planning")
       } else {
-        location.replace("/first-login")
+        router.push("/first-login")
       }
     } catch (err: any) {
       console.error(err)
