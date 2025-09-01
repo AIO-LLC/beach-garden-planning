@@ -28,6 +28,11 @@ export function useAuth(options: UseAuthOptions = {}) {
     isAdmin: false
   })
 
+  useEffect(() => {
+    console.log("Current cookies:", document.cookie);
+    console.log("Auth state:", authState);
+  }, [authState]);
+
   const router = useRouter()
 
   useEffect(() => {
