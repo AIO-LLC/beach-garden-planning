@@ -5,7 +5,7 @@ import { Form, Input, Button } from "@heroui/react"
 import * as EmailValidator from "email-validator"
 
 import { title } from "@/components/primitives"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -118,25 +118,12 @@ export default function FirstLoginPage() {
 
     var data = Object.fromEntries(new FormData(e.currentTarget))
 
-    const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
-      method: "GET",
-      credentials: "include"
-    })
-
-    if (!getJwtClaimsResponse.ok) {
-      const { error } = await getJwtClaimsResponse.json()
-      console.error(error)
-      return
-    }
-
-    const { id, phone, _isProfileComplete } = await getJwtClaimsResponse.json()
-
     // Remove password confirmation from data
     const { password_confirmation, ...rest } = data
 
     const payload = {
-      id: id,
-      phone: phone,
+      id: auth.userId, // Use userId from auth state
+      phone: auth.phone, // Use phone from auth state
       ...rest
     }
 
@@ -144,32 +131,49 @@ export default function FirstLoginPage() {
 
     try {
       const url = `${API_URL}/member-with-password`
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload)
       })
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
-        const refreshJwtPayload = { member_id: id }
-        const refreshResponse = await fetch(`${API_URL}/refresh-jwt`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(refreshJwtPayload)
-        })
+        const refreshJwtPayload = { member_id: auth.userId }
+        const refreshResponse = await authenticatedFetch(
+          `${API_URL}/refresh-jwt`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(refreshJwtPayload)
+          }
+        )
 
         if (refreshResponse.ok) {
-          // Token refreshed successfully, redirect to planning
+          // Get the new token from response
+          const { token } = await refreshResponse.json()
+
+          // Update the stored auth with new token
+          const storedAuth = JSON.parse(
+            localStorage.getItem("beach_garden_auth") || "{}"
+          )
+          localStorage.setItem(
+            "beach_garden_auth",
+            JSON.stringify({
+              ...storedAuth,
+              token: token,
+              isProfileComplete: true
+            })
+          )
+
+          // Redirect to planning
           window.location.href = "/planning"
         } else {
           // If refresh fails, log the user out & redirect to login
           console.warn(
             "Token refresh failed, but profile was updated. Redirecting to login."
           )
-          // TODO: delete JWT from client
+          localStorage.removeItem("beach_garden_auth")
           window.location.href = "/login"
         }
       }
