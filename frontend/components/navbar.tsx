@@ -14,6 +14,7 @@ import {
 } from "@heroui/react"
 import NextLink from "next/link"
 import NextImage from "next/image"
+import { getAuthToken, logout } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -26,15 +27,26 @@ export const Navbar = () => {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
+        const token = getAuthToken()
+
+        if (!token) {
+          setIsLoggedIn(false)
+          return
+        }
+
+        const response = await fetch(`${API_URL}/verify-token`, {
           method: "GET",
-          credentials: "include"
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         })
 
-        if (getJwtClaimsResponse.ok) {
-          const claims = await getJwtClaimsResponse.json()
+        if (response.ok) {
+          const claims = await response.json()
           setIsAdmin(claims.is_admin)
           setIsLoggedIn(true)
+        } else {
+          setIsLoggedIn(false)
         }
       } catch (err) {
         console.error(err)
@@ -53,11 +65,7 @@ export const Navbar = () => {
   }
 
   const handleLogout = async () => {
-    await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      credentials: "include"
-    })
-    location.replace("/")
+    await logout()
   }
 
   return (

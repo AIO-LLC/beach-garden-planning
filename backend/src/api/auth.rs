@@ -4,9 +4,8 @@ use crate::db::{models, queries};
 use crate::jwt::{create_jwt, verify_jwt};
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use axum::extract::{Json, State};
-use axum::http::{StatusCode, header::SET_COOKIE};
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum_extra::extract::CookieJar;
 use dotenvy::dotenv;
 use serde::Deserialize;
 use serde_json::json;
@@ -24,6 +23,7 @@ pub struct RefreshJwtPayload {
     member_id: String,
 }
 
+// Login endpoint that returns JWT token in response body
 pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginPayload>,
@@ -43,6 +43,7 @@ pub async fn login(
 
     let is_profile_complete: bool =
         member.email.is_some() && member.first_name.is_some() && member.last_name.is_some();
+
     let token: String = create_jwt(
         &member.id,
         &member.phone,
@@ -51,73 +52,66 @@ pub async fn login(
     )
     .expect("Could not create JWT.");
 
-    let cookie = if cfg!(debug_assertions) {
-        // Development configuration
-        format!("auth_token={token}; HttpOnly; SameSite=Lax; Max-Age=86400; Path=/")
-    } else {
-        // Production configuration
-        format!("auth_token={token}; HttpOnly; SameSite=None; Secure; Max-Age=86400; Path=/")
-    };
+    tracing::info!("User {} logged in successfully", member.id);
 
-    tracing::info!("Setting cookie: {}", cookie);
-
-    let mut response = (
+    Ok((
         StatusCode::OK,
         Json(json!({
             "message": "Login successful",
-            "cookie": cookie,
-            "is_profile_complete": is_profile_complete
+            "token": token,
+            "id": member.id,
+            "phone": member.phone,
+            "is_profile_complete": is_profile_complete,
+            "is_admin": member.is_admin
         })),
     )
-        .into_response();
-
-    response
-        .headers_mut()
-        .insert(SET_COOKIE, cookie.parse().unwrap());
-
-    Ok(response)
+        .into_response())
 }
 
-pub async fn logout() -> impl IntoResponse {
-    let cookie = if cfg!(debug_assertions) {
-        "auth_token=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/"
-    } else {
-        "auth_token=; HttpOnly; SameSite=None; Secure; Max-Age=0; Path=/"
-    };
+// Logout endpoint (mainly for logging purposes, actual logout happens client-side)
+pub async fn logout(headers: HeaderMap) -> impl IntoResponse {
+    // Extract user info from token if provided (for logging)
+    if let Some(auth_header) = headers.get("Authorization") {
+        if let Ok(auth_str) = auth_header.to_str() {
+            if auth_str.starts_with("Bearer ") {
+                let token = &auth_str[7..];
+                if let Ok(claims) = verify_jwt(token) {
+                    tracing::info!("User {} logged out", claims.sub);
+                }
+            }
+        }
+    }
 
-    (
-        StatusCode::NO_CONTENT,
-        [(SET_COOKIE, cookie)],
-        "", // empty body
-    )
+    (StatusCode::NO_CONTENT, "")
 }
 
-pub async fn get_jwt_claims(
+// Verify token endpoint - used by frontend to validate stored tokens
+pub async fn verify_token(
     State(_state): State<AppState>,
-    jar: CookieJar,
+    headers: HeaderMap,
 ) -> Result<impl IntoResponse, ApiError> {
-    // Check if auth_token cookie exists
-    let token = match jar.get("auth_token") {
-        Some(cookie) => cookie.value(),
-        None => return Err(ApiError::MissingAuthToken),
-    };
+    // Extract token from Authorization header
+    let token = extract_token_from_headers(&headers)?;
 
     // Verify and decode the JWT
-    let claims = match verify_jwt(token) {
+    let claims = match verify_jwt(&token) {
         Ok(claims) => claims,
-        Err(jwt_error) => match jwt_error.kind() {
-            jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
-                return Err(ApiError::TokenExpired);
+        Err(jwt_error) => {
+            tracing::debug!("JWT verification failed: {}", jwt_error);
+            match jwt_error.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
+                    return Err(ApiError::TokenExpired);
+                }
+                jsonwebtoken::errors::ErrorKind::InvalidToken
+                | jsonwebtoken::errors::ErrorKind::InvalidSignature => {
+                    return Err(ApiError::InvalidAuthToken);
+                }
+                _ => {
+                    tracing::error!("JWT verification error: {}", jwt_error);
+                    return Err(ApiError::WrongCredentials);
+                }
             }
-            jsonwebtoken::errors::ErrorKind::InvalidToken
-            | jsonwebtoken::errors::ErrorKind::InvalidSignature => {
-                return Err(ApiError::InvalidAuthToken);
-            }
-            _ => {
-                tracing::error!("JWT verification error: {}", jwt_error);
-                return Err(ApiError::WrongCredentials);
-            }
-        },
+        }
     };
 
     Ok(Json(json!({
@@ -127,6 +121,42 @@ pub async fn get_jwt_claims(
         "is_admin": claims.is_admin
     }))
     .into_response())
+}
+
+// Helper function to extract token from Authorization header
+pub fn extract_token_from_headers(headers: &HeaderMap) -> Result<String, ApiError> {
+    let auth_header = headers
+        .get("Authorization")
+        .ok_or(ApiError::MissingAuthToken)?;
+
+    let auth_str = auth_header
+        .to_str()
+        .map_err(|_| ApiError::InvalidAuthToken)?;
+
+    if !auth_str.starts_with("Bearer ") {
+        return Err(ApiError::InvalidAuthToken);
+    }
+
+    Ok(auth_str[7..].to_string())
+}
+
+// Middleware function to verify JWT from headers (for protected routes)
+pub async fn require_auth(
+    headers: HeaderMap,
+    State(_state): State<AppState>,
+) -> Result<crate::jwt::Claims, ApiError> {
+    let token = extract_token_from_headers(&headers)?;
+
+    match verify_jwt(&token) {
+        Ok(claims) => Ok(claims),
+        Err(jwt_error) => {
+            tracing::debug!("JWT verification failed in middleware: {}", jwt_error);
+            match jwt_error.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => Err(ApiError::TokenExpired),
+                _ => Err(ApiError::InvalidAuthToken),
+            }
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -173,7 +203,7 @@ pub async fn password_forgotten(
     let member: models::Member =
         match queries::member::get_member_by_email(&client, &payload.email).await {
             Ok(member) => member,
-            Err(_) => return Ok((StatusCode::OK).into_response()), // Return OK for email enumeration protection
+            Err(_) => return Ok((StatusCode::OK).into_response()),
         };
 
     let token: Uuid = queries::password_reset_token::create_token(&client, &member.id).await?;
@@ -190,26 +220,22 @@ pub async fn password_forgotten(
         Ok(()) => println!("Password reset email sent with token: {token}",),
         Err(error) => {
             println!("{error:?}");
-            return Err(ApiError::NotFound); // TODO: return a better error
+            return Err(ApiError::NotFound);
         }
     }
 
     Ok((StatusCode::OK).into_response())
 }
 
+// Refresh JWT endpoint - creates new token with updated claims
 pub async fn refresh_jwt(
     State(state): State<AppState>,
-    jar: CookieJar,
+    headers: HeaderMap,
     Json(payload): Json<RefreshJwtPayload>,
 ) -> Result<Response, ApiError> {
-    // Get the current JWT token from cookies
-    let token = jar.get("auth_token").ok_or(ApiError::NotFound)?.value();
-
-    // Verify the current token is valid (but might have outdated claims)
-    let _ = match verify_jwt(token) {
-        Ok(claims) => claims,
-        Err(_) => return Err(ApiError::WrongCredentials),
-    };
+    // Verify the current token is valid
+    let token = extract_token_from_headers(&headers)?;
+    let _ = verify_jwt(&token).map_err(|_| ApiError::WrongCredentials)?;
 
     // Fetch the latest user data from database
     let client = state.pool.get().await?;
@@ -226,25 +252,14 @@ pub async fn refresh_jwt(
     )
     .expect("Could not create JWT.");
 
-    // Set the new token in cookies
-    let cookie = if cfg!(debug_assertions) {
-        format!("auth_token={new_token}; HttpOnly; SameSite=Lax; Max-Age=86400; Path=/")
-    } else {
-        format!("auth_token={new_token}; HttpOnly; SameSite=None; Secure; Max-Age=86400; Path=/")
-    };
-
-    let mut response = (
+    Ok((
         StatusCode::OK,
         Json(json!({
             "message": "JWT refreshed successfully",
-            "is_profile_complete": is_profile_complete
+            "token": new_token,
+            "is_profile_complete": is_profile_complete,
+            "is_admin": member.is_admin
         })),
     )
-        .into_response();
-
-    response
-        .headers_mut()
-        .insert(SET_COOKIE, cookie.parse().unwrap());
-
-    Ok(response)
+        .into_response())
 }

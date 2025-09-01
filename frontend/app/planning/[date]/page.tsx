@@ -2,12 +2,12 @@
 
 import { Spinner } from "@heroui/react"
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Button, Accordion, AccordionItem, addToast } from "@heroui/react"
 import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { title } from "@/components/primitives"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
 
 type Reservation = {
   id: string
@@ -66,8 +66,11 @@ function getDefaultDate(): string {
 }
 
 export default function PlanningDatePage() {
-  const router = useRouter()
-  const auth = useAuth({ requireAuth: true, requireProfile: true, redirectTo: "/"})
+  const auth = useAuth({
+    requireAuth: true,
+    requireProfile: true,
+    redirectTo: "/"
+  })
   const { date } = useParams() as { date?: string }
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [displayDate, setDisplayDate] = useState("")
@@ -77,7 +80,7 @@ export default function PlanningDatePage() {
 
   useEffect(() => {
     if (!date || !isValidPlanningDate(date)) {
-      router.replace(`/planning/${getDefaultDate()}`)
+      location.replace(`/planning/${getDefaultDate()}`)
       return
     }
     const [y, m, d] = date.split("-").map(Number)
@@ -92,29 +95,35 @@ export default function PlanningDatePage() {
 
     async function fetchData() {
       try {
-        const res = await fetch(`${API_URL}/jwt-claims`, {
-          method: "GET",
-          credentials: "include"
-        })
-        if (res.ok) {
-          const { id } = await res.json()
-          setCurrentUserId(id)
+        // Use the userId from auth state if available
+        if (auth.userId) {
+          setCurrentUserId(auth.userId)
         }
-      } catch {}
 
-      try {
-        const res2 = await fetch(`${API_URL}/reservations/${date}`, {
-          method: "GET",
-          credentials: "include"
-        })
+        // Fetch reservations using authenticated fetch
+        const res2 = await authenticatedFetch(
+          `${API_URL}/reservations/${date}`,
+          {
+            method: "GET"
+          }
+        )
+
         if (res2.ok) {
           setReservations(await res2.json())
         }
-      } catch {}
+      } catch (error) {
+        console.error("Error fetching reservations:", error)
+        addToast({
+          title: "Erreur lors du chargement des réservations",
+          color: "danger"
+        })
+      }
     }
 
-    fetchData()
-  }, [date])
+    if (!auth.isLoading && auth.isLoggedIn) {
+      fetchData()
+    }
+  }, [date, auth.isLoading, auth.isLoggedIn, auth.userId])
 
   useEffect(() => {
     setCurrentUserHasReservation(
@@ -128,7 +137,7 @@ export default function PlanningDatePage() {
   const isSecond = date === thursday
 
   async function navTo(target: string) {
-    router.push(`/planning/${target}`)
+    location.replace(`/planning/${target}`)
   }
 
   if (!displayDate) return null
@@ -145,8 +154,8 @@ export default function PlanningDatePage() {
     <div>
       <h1 className="font-bold text-xl my-4">Planning</h1>
       <p className="italic text-sm">
-        Une seule réservation d’un terrain pour un créneau d’1h est possible par
-        jour et au nom d’une seule personne.
+        Une seule réservation d'un terrain pour un créneau d'1h est possible par
+        jour et au nom d'une seule personne.
       </p>
       <p className="italic text-sm mt-2">
         Les réservations ne sont disponibles que les mardis et jeudis.
@@ -188,7 +197,7 @@ export default function PlanningDatePage() {
               </span>
             )
           }
-          return <span>Vous n&apos;avez aucune réservation pour ce jour.</span>
+          return <span>Vous n'avez aucune réservation pour ce jour.</span>
         })()}
       </div>
 
@@ -229,23 +238,34 @@ export default function PlanningDatePage() {
                               color="danger"
                               size="sm"
                               onClick={async () => {
-                                await fetch(
-                                  `${API_URL}/reservation/${res.id}`,
-                                  {
-                                    method: "DELETE",
-                                    credentials: "include"
-                                  }
-                                )
-                                addToast({
-                                  title: "Votre réservation a été annulée."
-                                })
-                                const refreshed = await (
-                                  await fetch(
-                                    `${API_URL}/reservations/${date}`,
-                                    { credentials: "include" }
+                                try {
+                                  await authenticatedFetch(
+                                    `${API_URL}/reservation/${res.id}`,
+                                    {
+                                      method: "DELETE"
+                                    }
                                   )
-                                ).json()
-                                setReservations(refreshed)
+                                  addToast({
+                                    title: "Votre réservation a été annulée.",
+                                    color: "success"
+                                  })
+                                  const refreshed = await authenticatedFetch(
+                                    `${API_URL}/reservations/${date}`,
+                                    { method: "GET" }
+                                  )
+                                  if (refreshed.ok) {
+                                    setReservations(await refreshed.json())
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Error canceling reservation:",
+                                    error
+                                  )
+                                  addToast({
+                                    title: "Erreur lors de l'annulation",
+                                    color: "danger"
+                                  })
+                                }
                               }}
                               isDisabled={false}
                             >
@@ -264,30 +284,44 @@ export default function PlanningDatePage() {
                             color="primary"
                             size="sm"
                             onClick={async () => {
-                              await fetch(`${API_URL}/reservation`, {
-                                method: "POST",
-                                credentials: "include",
-                                headers: {
-                                  "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                  id: "",
-                                  member_id: currentUserId,
-                                  court_number: court,
-                                  reservation_date: date,
-                                  reservation_time: hour
+                              try {
+                                await authenticatedFetch(
+                                  `${API_URL}/reservation`,
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({
+                                      id: "",
+                                      member_id: currentUserId,
+                                      court_number: court,
+                                      reservation_date: date,
+                                      reservation_time: hour
+                                    })
+                                  }
+                                )
+                                addToast({
+                                  title: "Votre réservation a été enregistrée.",
+                                  color: "success"
                                 })
-                              })
-                              addToast({
-                                title: "Votre réservation a été enregistrée.",
-                                color: "success"
-                              })
-                              const refreshed = await (
-                                await fetch(`${API_URL}/reservations/${date}`, {
-                                  credentials: "include"
+                                const refreshed = await authenticatedFetch(
+                                  `${API_URL}/reservations/${date}`,
+                                  { method: "GET" }
+                                )
+                                if (refreshed.ok) {
+                                  setReservations(await refreshed.json())
+                                }
+                              } catch (error) {
+                                console.error(
+                                  "Error making reservation:",
+                                  error
+                                )
+                                addToast({
+                                  title: "Erreur lors de la réservation",
+                                  color: "danger"
                                 })
-                              ).json()
-                              setReservations(refreshed)
+                              }
                             }}
                             isDisabled={false}
                           >

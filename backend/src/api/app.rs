@@ -3,8 +3,6 @@ use crate::api::wrappers;
 use axum::http::HeaderValue;
 use axum::http::header::AUTHORIZATION;
 use axum::http::header::CONTENT_TYPE;
-use axum::http::header::COOKIE;
-use axum::http::header::SET_COOKIE;
 use axum::{
     Json,
     http::{Method, StatusCode},
@@ -69,7 +67,6 @@ pub async fn build_state() -> AppState {
     )
     .unwrap();
 
-    // TODO: separate local & public environment for db connection
     let mut cfg = deadpool_postgres::Config::new();
     cfg.host = Some(postgres_host);
     cfg.user = Some(postgres_user);
@@ -193,12 +190,12 @@ pub async fn router(app_state: AppState) -> Router {
             Method::PATCH,
             Method::DELETE,
         ])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE, SET_COOKIE, COOKIE])
-        .expose_headers([SET_COOKIE])
+        .allow_headers([AUTHORIZATION, CONTENT_TYPE])
+        .expose_headers([CONTENT_TYPE])
         .allow_credentials(true);
 
     Router::new()
-        // Member routes
+        // Member routes - these should be protected with auth middleware
         .route(
             "/member",
             post(wrappers::member::add_member).patch(wrappers::member::update_member),
@@ -214,7 +211,7 @@ pub async fn router(app_state: AppState) -> Router {
         )
         .route("/password", patch(wrappers::member::update_password))
         .route("/password-reset", patch(wrappers::member::password_reset))
-        // Reservation routes
+        // Reservation routes - these should be protected with auth middleware
         .route(
             "/reservation",
             patch(wrappers::reservation::update_reservation)
@@ -229,10 +226,10 @@ pub async fn router(app_state: AppState) -> Router {
             get(wrappers::reservation::get_reservation)
                 .delete(wrappers::reservation::delete_reservation),
         )
-        // Authentication
+        // Authentication routes
         .route("/login", post(auth::login))
         .route("/logout", post(auth::logout))
-        .route("/jwt-claims", get(auth::get_jwt_claims))
+        .route("/verify-token", get(auth::verify_token)) // New endpoint for token verification
         .route("/refresh-jwt", post(auth::refresh_jwt))
         .route("/password-forgotten", post(auth::password_forgotten))
         .with_state(app_state)

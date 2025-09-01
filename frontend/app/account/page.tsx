@@ -9,7 +9,7 @@ import * as EmailValidator from "email-validator"
 
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -138,35 +138,16 @@ export default function AccountPage() {
       data.phone = data.phone.replace(/\D/g, "")
     }
 
-    const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
-      method: "GET",
-      credentials: "include"
-    })
-
-    if (!getJwtClaimsResponse.ok) {
-      const { error } = await getJwtClaimsResponse.json()
-
-      console.error(error)
-      addToast({
-        title: "Une erreur est survenue. Veuillez réessayer plus tard.",
-        color: "danger"
-      })
-      return
-    }
-
-    const claims = await getJwtClaimsResponse.json()
-
     const payload = {
-      id: claims.id,
+      id: auth.userId,
       ...data
     }
 
     try {
       const url = `${API_URL}/member`
-      const response = await fetch(url, {
+      const response = await authenticatedFetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload)
       })
 
@@ -192,27 +173,9 @@ export default function AccountPage() {
   }
 
   useEffect(() => {
-    const getJwt = async () => {
-      const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
-        method: "GET",
-        credentials: "include"
-      })
-
-      if (!getJwtClaimsResponse.ok) {
-        const { error } = await getJwtClaimsResponse.json()
-
-        console.error(error)
-
-        return
-      }
-
-      return await getJwtClaimsResponse.json()
-    }
-
     const getMemberData = async (id: string): Promise<Member | null> => {
-      const response = await fetch(`${API_URL}/member/${id}`, {
-        method: "GET",
-        credentials: "include"
+      const response = await authenticatedFetch(`${API_URL}/member/${id}`, {
+        method: "GET"
       })
 
       if (!response.ok) {
@@ -224,20 +187,18 @@ export default function AccountPage() {
       return await response.json()
     }
 
-    getJwt().then(claims => {
-      const { id, _phone, _is_profile_complete } = claims
-
-      getMemberData(id).then(memberData => {
+    if (auth.userId && !auth.isLoading) {
+      getMemberData(auth.userId).then(memberData => {
         if (memberData !== null) {
           memberData.phone = "+" + memberData.phone
           setMember(memberData)
           setOriginalMember(memberData)
         }
       })
-    })
-  }, [])
+    }
+  }, [auth.userId, auth.isLoading])
 
-  if (member.first_name === "" || auth.isLoading) {
+  if (member == emptyMember || auth.isLoading) {
     return (
       <>
         <Spinner className="mt-8" size="lg" />

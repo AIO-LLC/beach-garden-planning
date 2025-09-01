@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
@@ -11,6 +11,8 @@ interface AuthState {
   isLoggedIn: boolean
   isProfileComplete: boolean
   isAdmin: boolean
+  userId?: string
+  phone?: string
 }
 
 interface UseAuthOptions {
@@ -18,6 +20,80 @@ interface UseAuthOptions {
   requireProfile?: boolean
   requireAdmin?: boolean
   redirectTo?: string
+}
+
+interface StoredAuth {
+  token: string
+  userId: string
+  phone: string
+  isProfileComplete: boolean
+  isAdmin: boolean
+  expiresAt: number
+}
+
+// Helper functions for token management
+const AUTH_KEY = "beach_garden_auth"
+
+const getStoredAuth = (): StoredAuth | null => {
+  if (typeof window === "undefined") return null
+
+  try {
+    const stored = localStorage.getItem(AUTH_KEY)
+    if (!stored) return null
+
+    const auth = JSON.parse(stored) as StoredAuth
+
+    // Check if token is expired
+    if (Date.now() > auth.expiresAt) {
+      localStorage.removeItem(AUTH_KEY)
+      return null
+    }
+
+    return auth
+  } catch (error) {
+    console.error("Error reading auth from storage:", error)
+    localStorage.removeItem(AUTH_KEY)
+    return null
+  }
+}
+
+const setStoredAuth = (auth: StoredAuth): void => {
+  try {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(auth))
+  } catch (error) {
+    console.error("Error storing auth:", error)
+  }
+}
+
+const clearStoredAuth = (): void => {
+  localStorage.removeItem(AUTH_KEY)
+}
+
+// Export for use in other components
+export const getAuthToken = (): string | null => {
+  const auth = getStoredAuth()
+  return auth?.token || null
+}
+
+// Export logout function for use in other components
+export const logout = async (): Promise<void> => {
+  const token = getAuthToken()
+
+  if (token) {
+    try {
+      await fetch(`${API_URL}/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+    } catch (error) {
+      console.error("Logout API call failed:", error)
+    }
+  }
+
+  clearStoredAuth()
+  window.location.href = "/login"
 }
 
 export function useAuth(options: UseAuthOptions = {}) {
@@ -28,101 +104,114 @@ export function useAuth(options: UseAuthOptions = {}) {
     isAdmin: false
   })
 
-  useEffect(() => {
-    console.log("Current cookies:", document.cookie);
-    console.log("Auth state:", authState);
-  }, [authState]);
-
   const router = useRouter()
 
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const response = await fetch(`${API_URL}/jwt-claims`, {
-          method: "GET",
-          credentials: "include"
+  const verifyAuth = useCallback(async () => {
+    try {
+      const storedAuth = getStoredAuth()
+
+      if (!storedAuth) {
+        setAuthState({
+          isLoading: false,
+          isLoggedIn: false,
+          isProfileComplete: false,
+          isAdmin: false
         })
 
-        if (response.ok) {
-          const claims = await response.json()
-          const newState = {
-            isLoading: false,
-            isLoggedIn: true,
-            isProfileComplete: claims.is_profile_complete,
-            isAdmin: claims.is_admin
-          }
-          setAuthState(newState)
+        if (options.requireAuth) {
+          router.replace(options.redirectTo || "/login")
+        }
+        return
+      }
 
-          // Handle redirects based on auth state
-          if (options.requireAuth && !newState.isLoggedIn) {
-            router.replace(options.redirectTo || "/login")
+      // Verify token with backend
+      const response = await fetch(`${API_URL}/verify-token`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${storedAuth.token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        const newState = {
+          isLoading: false,
+          isLoggedIn: true,
+          isProfileComplete: data.is_profile_complete,
+          isAdmin: data.is_admin,
+          userId: data.id,
+          phone: data.phone
+        }
+
+        setAuthState(newState)
+
+        // Update stored auth with fresh data
+        setStoredAuth({
+          ...storedAuth,
+          isProfileComplete: data.is_profile_complete,
+          isAdmin: data.is_admin
+        })
+
+        // Handle redirects based on auth state
+        if (options.requireAuth && !newState.isLoggedIn) {
+          router.replace(options.redirectTo || "/login")
+          return
+        }
+
+        if (
+          options.requireProfile &&
+          (!newState.isLoggedIn || !newState.isProfileComplete)
+        ) {
+          router.replace("/first-login")
+          return
+        }
+
+        if (
+          options.requireAdmin &&
+          (!newState.isLoggedIn || !newState.isAdmin)
+        ) {
+          router.replace("/")
+          return
+        }
+
+        // Redirect completed profiles away from incomplete-only pages
+        if (newState.isLoggedIn && newState.isProfileComplete) {
+          const currentPath = window.location.pathname
+          const shouldRedirectToPlanning = [
+            "/login",
+            "/first-login",
+            "/password-forgotten",
+            "/password-reset"
+          ].includes(currentPath)
+
+          if (shouldRedirectToPlanning) {
+            router.replace("/planning")
             return
           }
+        }
 
-          if (
-            options.requireProfile &&
-            (!newState.isLoggedIn || !newState.isProfileComplete)
-          ) {
+        // Redirect incomplete profiles to first-login
+        if (newState.isLoggedIn && !newState.isProfileComplete) {
+          const currentPath = window.location.pathname
+          const shouldRedirectToFirstLogin = [
+            "/account",
+            "/edit-password",
+            "/login",
+            "/password-forgotten",
+            "/password-reset",
+            "/planning",
+            "/admin-panel"
+          ].includes(currentPath)
+
+          if (shouldRedirectToFirstLogin) {
             router.replace("/first-login")
             return
           }
-
-          if (
-            options.requireAdmin &&
-            (!newState.isLoggedIn || !newState.isAdmin)
-          ) {
-            router.replace("/")
-            return
-          }
-
-          // Redirect completed profiles away from incomplete-only pages
-          if (newState.isLoggedIn && newState.isProfileComplete) {
-            const currentPath = window.location.pathname
-            const shouldRedirectToPlanning = [
-              "/login",
-              "/first-login",
-              "/password-forgotten",
-              "/password-reset"
-            ].includes(currentPath)
-
-            if (shouldRedirectToPlanning) {
-              router.replace("/planning")
-              return
-            }
-          }
-
-          // Redirect incomplete profiles to first-login
-          if (newState.isLoggedIn && !newState.isProfileComplete) {
-            const currentPath = window.location.pathname
-            const shouldRedirectToFirstLogin = [
-              "/account",
-              "/edit-password",
-              "/login",
-              "/password-forgotten",
-              "/password-reset",
-              "/planning",
-              "/admin-panel"
-            ].includes(currentPath)
-
-            if (shouldRedirectToFirstLogin) {
-              router.replace("/first-login")
-              return
-            }
-          }
-        } else {
-          setAuthState({
-            isLoading: false,
-            isLoggedIn: false,
-            isProfileComplete: false,
-            isAdmin: false
-          })
-
-          if (options.requireAuth) {
-            router.replace(options.redirectTo || "/login")
-          }
         }
-      } catch (error) {
-        console.error("Auth check failed:", error)
+      } else {
+        // Token is invalid
+        clearStoredAuth()
         setAuthState({
           isLoading: false,
           isLoggedIn: false,
@@ -134,9 +223,20 @@ export function useAuth(options: UseAuthOptions = {}) {
           router.replace(options.redirectTo || "/login")
         }
       }
-    }
+    } catch (error) {
+      console.error("Auth check failed:", error)
+      clearStoredAuth()
+      setAuthState({
+        isLoading: false,
+        isLoggedIn: false,
+        isProfileComplete: false,
+        isAdmin: false
+      })
 
-    checkAuth()
+      if (options.requireAuth) {
+        router.replace(options.redirectTo || "/login")
+      }
+    }
   }, [
     options.requireAuth,
     options.requireProfile,
@@ -145,10 +245,85 @@ export function useAuth(options: UseAuthOptions = {}) {
     router
   ])
 
+  useEffect(() => {
+    verifyAuth()
+  }, [verifyAuth])
+
+  // Refresh token periodically (every 20 minutes)
+  useEffect(() => {
+    if (!authState.isLoggedIn) return
+
+    const refreshInterval = setInterval(
+      () => {
+        verifyAuth()
+      },
+      20 * 60 * 1000
+    )
+
+    return () => clearInterval(refreshInterval)
+  }, [authState.isLoggedIn, verifyAuth])
+
   return authState
 }
 
-// Usage examples:
-// const auth = useAuth({ requireAuth: true }) // For protected pages
-// const auth = useAuth({ requireAuth: true, requireProfile: true }) // For profile-complete pages
-// const auth = useAuth({ requireAuth: true, requireAdmin: true }) // For admin pages
+// Login function to be used in login page
+export const login = async (
+  phone: string,
+  password: string
+): Promise<{
+  success: boolean
+  isProfileComplete?: boolean
+  error?: string
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password })
+    })
+
+    if (!response.ok) {
+      return { success: false, error: "Invalid credentials" }
+    }
+
+    const data = await response.json()
+
+    // Store auth data
+    setStoredAuth({
+      token: data.token,
+      userId: data.id,
+      phone: data.phone,
+      isProfileComplete: data.is_profile_complete,
+      isAdmin: data.is_admin,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+    })
+
+    return {
+      success: true,
+      isProfileComplete: data.is_profile_complete
+    }
+  } catch (error) {
+    console.error("Login failed:", error)
+    return { success: false, error: "Login failed" }
+  }
+}
+
+// Helper to make authenticated API calls
+export const authenticatedFetch = async (
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> => {
+  const token = getAuthToken()
+
+  if (!token) {
+    throw new Error("No authentication token")
+  }
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${token}`
+    }
+  })
+}

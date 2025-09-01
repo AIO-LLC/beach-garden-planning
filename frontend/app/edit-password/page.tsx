@@ -5,7 +5,7 @@ import { Form, Input, Button, addToast } from "@heroui/react"
 
 import { Spinner } from "@heroui/react"
 import { title } from "@/components/primitives"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -64,36 +64,21 @@ export default function EditPasswordPage() {
       !newPasswordConfirmationError
     )
   }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
     try {
-      const getJwtClaimsResponse = await fetch(`${API_URL}/jwt-claims`, {
-        method: "GET",
-        credentials: "include"
-      })
-
-      if (!getJwtClaimsResponse.ok) {
-        const { error } = await getJwtClaimsResponse.json()
-
-        console.error(error)
-
-        return
-      }
-      const { id, _phone, _isProfileComplete } =
-        await getJwtClaimsResponse.json()
-
       const payload = {
-        id: id,
+        id: auth.userId, // Use userId from auth state
         current_password: password,
         new_password: newPassword
       }
 
       const url = `${API_URL}/password`
-      const editPasswordResponse = await fetch(url, {
+      const editPasswordResponse = await authenticatedFetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload)
       })
 

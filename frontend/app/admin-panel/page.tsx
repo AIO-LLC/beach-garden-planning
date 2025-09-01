@@ -28,7 +28,7 @@ import {
   ModalBody,
   ModalFooter
 } from "@heroui/modal"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -129,10 +129,9 @@ export default function AdminPanelPage() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/member`, {
+      const res = await authenticatedFetch(`${API_URL}/member`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(addMemberPayload)
       })
 
@@ -179,9 +178,9 @@ export default function AdminPanelPage() {
 
   async function load() {
     try {
-      const res = await fetch(
+      const res = await authenticatedFetch(
         `${API_URL}/members?page=${page}&per_page=${perPage}`,
-        { credentials: "include" }
+        { method: "GET" }
       )
       if (!res.ok) {
         const error = await res.json()
@@ -196,8 +195,6 @@ export default function AdminPanelPage() {
       const data: PaginatedResponse = await res.json()
       setMembers(data.items)
       setTotal(data.total_count)
-      // setPerPage(data.per_page)
-      // setPages(data.total_pages)
     } catch (err) {
       console.error(err)
       addToast({
@@ -217,9 +214,8 @@ export default function AdminPanelPage() {
   const deleteMember = async (id: string) => {
     if (!confirm("Supprimer ce membre ?")) return
     try {
-      const res = await fetch(`${API_URL}/member/${id}`, {
-        method: "DELETE",
-        credentials: "include"
+      const res = await authenticatedFetch(`${API_URL}/member/${id}`, {
+        method: "DELETE"
       })
       if (!res.ok) throw new Error()
       addToast({ title: "Membre supprimé.", color: "success" })
