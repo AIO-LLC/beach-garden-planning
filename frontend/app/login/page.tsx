@@ -15,10 +15,22 @@ const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function LogInPage() {
   const router = useRouter()
-  const auth = useAuth({ redirectTo: "/planning" })
+  const auth = useAuth()
   const [phone, setPhone] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [isInvalid, setIsInvalid] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!auth.isLoading && auth.isLoggedIn) {
+      if (auth.isProfileComplete) {
+        router.replace("/planning")
+      } else {
+        router.replace("/first-login")
+      }
+    }
+  }, [auth.isLoading, auth.isLoggedIn, auth.isProfileComplete, router])
 
   const isFormValid = (): boolean => {
     return phone !== "" && password !== ""
@@ -26,6 +38,7 @@ export default function LogInPage() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
     var payload = Object.fromEntries(new FormData(e.currentTarget))
     if (typeof payload.phone === "string") {
@@ -43,25 +56,29 @@ export default function LogInPage() {
 
       if (!loginResponse.ok) {
         setIsInvalid(true)
+        setIsSubmitting(false)
         addToast({
           title: "Numéro de téléphone ou mot de passe incorrect.",
           color: "danger"
         })
-
-        // TODO: Update response from backend when unknown phone number or wrong password, and show a toast with another error message for server errors or others
         return
       }
 
-      const { is_profile_complete, cookie } = await loginResponse.json()
-      document.cookie = cookie
+      const { is_profile_complete } = await loginResponse.json()
+      
+      // Don't manually set cookie - the browser will handle it from Set-Cookie header
+      // Just wait a moment for the cookie to be properly set
+      await new Promise(resolve => setTimeout(resolve, 100))
 
+      // Use window.location for a hard redirect to ensure cookies are properly loaded
       if (is_profile_complete) {
-        router.push("/planning")
+        window.location.href = "/planning"
       } else {
-        router.push("/first-login")
+        window.location.href = "/first-login"
       }
     } catch (err: any) {
       console.error(err)
+      setIsSubmitting(false)
       addToast({
         title: "Erreur",
         description: "Une erreur est survenue. Veuillez réessayer plus tard.",
@@ -110,7 +127,12 @@ export default function LogInPage() {
         <Link className="underline" href="/password-forgotten">
           Mot de passe oublié ?
         </Link>
-        <Button color="primary" type="submit" isDisabled={!isFormValid()}>
+        <Button 
+          color="primary" 
+          type="submit" 
+          isDisabled={!isFormValid() || isSubmitting}
+          isLoading={isSubmitting}
+        >
           Se connecter
         </Button>
       </Form>
