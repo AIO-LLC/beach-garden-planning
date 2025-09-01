@@ -53,6 +53,9 @@ export default function LogInPage() {
       const { is_profile_complete, cookie } = await loginResponse.json()
       document.cookie = cookie
 
+      // Add a small delay to ensure cookie is set, especially on mobile
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       if (is_profile_complete) {
         location.replace("/planning")
       } else {
