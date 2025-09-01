@@ -154,8 +154,8 @@ export default function PlanningDatePage() {
     <div>
       <h1 className="font-bold text-xl my-4">Planning</h1>
       <p className="italic text-sm">
-        Une seule réservation d'un terrain pour un créneau d'1h est possible par
-        jour et au nom d'une seule personne.
+        Une seule réservation d&apos;un terrain pour un créneau d&apos;1h est possible par
+        jour et au nom d&apos;une seule personne.
       </p>
       <p className="italic text-sm mt-2">
         Les réservations ne sont disponibles que les mardis et jeudis.
@@ -197,7 +197,7 @@ export default function PlanningDatePage() {
               </span>
             )
           }
-          return <span>Vous n'avez aucune réservation pour ce jour.</span>
+          return <span>Vous n&apos;avez aucune réservation pour ce jour.</span>
         })()}
       </div>
 
