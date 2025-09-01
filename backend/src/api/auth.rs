@@ -154,9 +154,8 @@ pub async fn password_forgotten(
     {
         let frontend_ip: &str =
             &env::var("FRONTEND_IP").expect("Undefined FRONTEND_IP environment variable");
-        let frontend_port: u16 = str::parse(
-            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable"),
-        );
+        let frontend_port: &str =
+            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable");
         base_url = format!("http://{frontend_ip}:{frontend_port}");
     }
 
