@@ -13,6 +13,7 @@ const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function FirstLoginPage() {
   const auth = useAuth({ requireAuth: true })
+  const [isEmailTaken, setIsEmailTaken] = React.useState<boolean>(false)
   const [firstName, setFirstName] = React.useState<string>("")
   const [lastName, setLastName] = React.useState<string>("")
   const [email, setEmail] = React.useState<string>("")
@@ -56,6 +57,9 @@ export default function FirstLoginPage() {
 
   const getEmailError = (value: string): string | null => {
     if (value.length === 0) return null
+
+    if (isEmailTaken)
+      return "Cette adresse email est déjà associée à un compte existant."
 
     if (!EmailValidator.validate(value)) {
       return "L'adresse email est invalide."
@@ -127,8 +131,6 @@ export default function FirstLoginPage() {
       ...rest
     }
 
-    console.log(payload)
-
     try {
       const url = `${API_URL}/member-with-password`
       const response = await authenticatedFetch(url, {
@@ -136,6 +138,11 @@ export default function FirstLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
+
+      if (response.status === 409) {
+        setIsEmailTaken(true)
+        return
+      }
 
       if (!response.ok) throw new Error(`Erreur ${response.status}`)
       else {
@@ -207,15 +214,18 @@ export default function FirstLoginPage() {
         />
         <Input
           isRequired
-          errorMessage={getEmailError(email)}
-          isInvalid={getEmailError(email) !== null}
+          errorMessage={getEmailError(email) || isEmailTaken}
+          isInvalid={getEmailError(email) !== null || isEmailTaken}
           label="Adresse email"
           labelPlacement="outside"
           name="email"
           placeholder="Entrez votre adresse email"
           type="email"
           value={email}
-          onValueChange={setEmail}
+          onValueChange={newValue => {
+            setIsEmailTaken(false)
+            setEmail(newValue)
+          }}
         />
         <Input
           isRequired
