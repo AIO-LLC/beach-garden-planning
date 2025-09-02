@@ -293,6 +293,10 @@ export default function AdminPanelPage() {
         className="mt-4 flex justify-center"
       />
 
+      <Button className="mt-8" onClick={() => location.replace("/planning")}>
+        Retour
+      </Button>
+
       <Modal
         isOpen={isCreateOpen}
         onOpenChange={handleModalClose}
