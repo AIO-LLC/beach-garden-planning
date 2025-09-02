@@ -32,8 +32,9 @@ time = "0.3.41"
 tokio = { version = "1.47.0", features = ["full"] }
 tokio-postgres = { version = "0.7.13", features = ["with-chrono-0_4", "with-uuid-1"] }
 tokio-postgres-rustls = "0.13.0"
-tower-http = { version = "0.6.6", features = ["cors"] }
+tower-http = { version = "0.6.6", features = ["cors", "trace"] }
 tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 uuid = { version = "1.18.0", features = ["serde", "v4"] }
 webpki-roots = "1.0.2"
 
