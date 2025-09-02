@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "@heroui/link"
 import { button as buttonStyles } from "@heroui/theme"
+import { getAuthToken } from "@/hooks/useAuth"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
 const API_PORT = process.env.NEXT_PUBLIC_API_PORT
@@ -14,9 +15,18 @@ export default function Home() {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch(`${API_URL}/jwt-claims`, {
+        const token = getAuthToken()
+
+        if (!token) {
+          setIsLoggedIn(false)
+          return
+        }
+
+        const res = await fetch(`${API_URL}/verify-token`, {
           method: "GET",
-          credentials: "include"
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         })
 
         setIsLoggedIn(res.ok)
