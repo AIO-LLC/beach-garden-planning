@@ -16,20 +16,23 @@ use axum::{
 use deadpool_postgres;
 use deadpool_postgres::{ManagerConfig, Pool, RecyclingMethod, Runtime};
 use dotenvy::dotenv;
-use rustls::RootCertStore;
 use std::env;
-use std::io::BufReader;
 use thiserror::Error;
-use tokio_postgres_rustls::MakeRustlsConnect;
 use tower_http::cors::CorsLayer;
+use tower_http::trace::TraceLayer;
+
+#[cfg(not(feature = "local"))]
+use {rustls::RootCertStore, std::io::BufReader, tokio_postgres_rustls::MakeRustlsConnect};
 
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool,
 }
 
+#[cfg(not(feature = "local"))]
 const RDS_CA_CERT: &[u8] = include_bytes!("../../certs/us-east-1-bundle.pem");
 
+#[cfg(not(feature = "local"))]
 fn create_rds_connector() -> MakeRustlsConnect {
     let mut root_store = RootCertStore::empty();
 
@@ -76,11 +79,25 @@ pub async fn build_state() -> AppState {
     cfg.manager = Some(ManagerConfig {
         recycling_method: RecyclingMethod::Fast,
     });
-    cfg.ssl_mode = Some(deadpool_postgres::SslMode::Require);
 
-    let connector = create_rds_connector();
-    let pool = cfg.create_pool(Some(Runtime::Tokio1), connector).unwrap();
-    AppState { pool }
+    #[cfg(feature = "local")]
+    {
+        // For local development, use NoTls or disable SSL
+        cfg.ssl_mode = Some(deadpool_postgres::SslMode::Disable);
+        let pool = cfg
+            .create_pool(Some(Runtime::Tokio1), tokio_postgres::NoTls)
+            .unwrap();
+        AppState { pool }
+    }
+
+    #[cfg(not(feature = "local"))]
+    {
+        // For production, use SSL with RDS certificates
+        cfg.ssl_mode = Some(deadpool_postgres::SslMode::Require);
+        let connector = create_rds_connector();
+        let pool = cfg.create_pool(Some(Runtime::Tokio1), connector).unwrap();
+        AppState { pool }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -233,5 +250,46 @@ pub async fn router(app_state: AppState) -> Router {
         .route("/refresh-jwt", post(auth::refresh_jwt))
         .route("/password-forgotten", post(auth::password_forgotten))
         .with_state(app_state)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &axum::http::Request<_>| {
+                    let matched_path = request
+                        .extensions()
+                        .get::<axum::extract::MatchedPath>()
+                        .map(axum::extract::MatchedPath::as_str);
+
+                    tracing::info_span!(
+                        "http_request",
+                        method = ?request.method(),
+                        matched_path,
+                        some_other_field = tracing::field::Empty,
+                    )
+                })
+                .on_request(|request: &axum::http::Request<_>, _span: &tracing::Span| {
+                    tracing::debug!(
+                        "Started processing request: {} {}",
+                        request.method(),
+                        request.uri()
+                    );
+                })
+                .on_response(
+                    |response: &axum::http::Response<_>,
+                     latency: std::time::Duration,
+                     _span: &tracing::Span| {
+                        tracing::debug!(
+                            "Response generated in {:?} - Status: {}",
+                            latency,
+                            response.status()
+                        );
+                    },
+                )
+                .on_failure(
+                    |error: tower_http::classify::ServerErrorsFailureClass,
+                     latency: std::time::Duration,
+                     _span: &tracing::Span| {
+                        tracing::error!("Request failed after {:?} - Error: {:?}", latency, error);
+                    },
+                ),
+        )
         .layer(cors)
 }

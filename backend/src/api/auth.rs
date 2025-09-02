@@ -28,16 +28,27 @@ pub async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginPayload>,
 ) -> Result<Response, ApiError> {
-    let client = state.pool.get().await?;
-    let member: models::Member =
-        queries::member::get_member_by_phone(&client, &payload.phone).await?;
+    tracing::debug!("Login attempt for phone: {}", payload.phone);
 
-    let parsed_hash = PasswordHash::new(&member.password).map_err(|_| ApiError::NotFound)?;
+    let client = state.pool.get().await.map_err(|e| {
+        tracing::error!("Failed to get database connection: {:?}", e);
+        ApiError::Pool(e)
+    })?;
 
-    if Argon2::default()
-        .verify_password(payload.password.as_bytes(), &parsed_hash)
-        .is_err()
-    {
+    let member: models::Member = queries::member::get_member_by_phone(&client, &payload.phone)
+        .await
+        .map_err(|e| {
+            tracing::warn!("Member not found for phone {}: {:?}", payload.phone, e);
+            ApiError::NotFound
+        })?;
+
+    let parsed_hash = PasswordHash::new(&member.password).map_err(|e| {
+        tracing::error!("Failed to parse password hash: {:?}", e);
+        ApiError::NotFound
+    })?;
+
+    if let Err(e) = Argon2::default().verify_password(payload.password.as_bytes(), &parsed_hash) {
+        tracing::warn!("Invalid password for user {}: {:?}", member.id, e);
         return Err(ApiError::NotFound);
     }
 
@@ -50,7 +61,10 @@ pub async fn login(
         is_profile_complete,
         member.is_admin,
     )
-    .expect("Could not create JWT.");
+    .map_err(|e| {
+        tracing::error!("Failed to create JWT for user {}: {:?}", member.id, e);
+        ApiError::WrongCredentials
+    })?;
 
     tracing::info!("User {} logged in successfully", member.id);
 
