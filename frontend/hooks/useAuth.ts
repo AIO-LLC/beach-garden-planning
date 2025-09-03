@@ -45,7 +45,10 @@ const getStoredAuth = (): StoredAuth | null => {
     }
 
     const auth = JSON.parse(stored) as StoredAuth
-    console.log("Auth data retrieved:", { ...auth, token: auth.token ? "exists" : "missing" })
+    console.log("Auth data retrieved:", {
+      ...auth,
+      token: auth.token ? "exists" : "missing"
+    })
 
     // Check if token is expired
     if (Date.now() > auth.expiresAt) {
@@ -66,12 +69,12 @@ const setStoredAuth = (auth: StoredAuth): void => {
   try {
     const authString = JSON.stringify(auth)
     localStorage.setItem(AUTH_KEY, authString)
-    
+
     // Force a storage event for mobile browsers
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("storage"))
     }
-    
+
     console.log("Auth data stored successfully")
   } catch (error) {
     console.error("Error storing auth:", error)
@@ -126,7 +129,7 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   const verifyAuth = useCallback(async () => {
     console.log("Verifying auth...")
-    
+
     try {
       const storedAuth = getStoredAuth()
 
@@ -146,7 +149,7 @@ export function useAuth(options: UseAuthOptions = {}) {
       }
 
       console.log("Verifying token with backend...")
-      
+
       // Verify token with backend
       const response = await fetch(`${API_URL}/verify-token`, {
         method: "GET",
@@ -240,7 +243,7 @@ export function useAuth(options: UseAuthOptions = {}) {
     const timer = setTimeout(() => {
       verifyAuth()
     }, 50)
-    
+
     return () => clearTimeout(timer)
   }, [verifyAuth])
 
@@ -283,7 +286,7 @@ export const login = async (
 }> => {
   try {
     console.log("Sending login request...")
-    
+
     const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -307,9 +310,9 @@ export const login = async (
       isAdmin: data.is_admin,
       expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
     }
-    
+
     setStoredAuth(authData)
-    
+
     // Double-check the data was stored (for mobile debugging)
     const stored = getStoredAuth()
     if (!stored) {

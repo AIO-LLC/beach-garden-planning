@@ -37,18 +37,21 @@ export default function LogInPage() {
     setIsSubmitting(true)
 
     const phoneNumber = phone.replace(/\D/g, "")
-    
+
     // Debug logging
     console.log("Attempting login with phone:", phoneNumber)
 
     const result = await login(phoneNumber, password)
 
     if (result.success) {
-      console.log("Login successful, profile complete:", result.isProfileComplete)
-      
+      console.log(
+        "Login successful, profile complete:",
+        result.isProfileComplete
+      )
+
       // Add a small delay to ensure localStorage write completes on mobile
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Use window.location.href for a hard redirect to ensure full page reload
       // This ensures the auth state is properly loaded from localStorage
       if (result.isProfileComplete) {
