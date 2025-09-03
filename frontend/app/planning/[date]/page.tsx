@@ -92,6 +92,33 @@ function isValidPlanningDate(d: string): boolean {
   return d === tuesday || d === thursday
 }
 
+function getNavigationDates(currentDate: string): { prevDate: string | null; nextDate: string | null } {
+  const { tuesday, thursday } = getAvailableDates()
+  
+  // Determine chronological order of the two available dates
+  const tuesdayDate = new Date(tuesday)
+  const thursdayDate = new Date(thursday)
+  const isThursdayAfterTuesday = thursdayDate > tuesdayDate
+  
+  if (isThursdayAfterTuesday) {
+    // Normal case: Tuesday comes first, then Thursday
+    if (currentDate === tuesday) {
+      return { prevDate: null, nextDate: thursday }
+    } else if (currentDate === thursday) {
+      return { prevDate: tuesday, nextDate: null }
+    }
+  } else {
+    // Special case: Thursday comes first (this week), then Tuesday (next week)
+    if (currentDate === thursday) {
+      return { prevDate: null, nextDate: tuesday }
+    } else if (currentDate === tuesday) {
+      return { prevDate: thursday, nextDate: null }
+    }
+  }
+  
+  return { prevDate: null, nextDate: null }
+}
+
 export default function PlanningDatePage() {
   const router = useRouter()
   const auth = useAuth({
@@ -161,9 +188,7 @@ export default function PlanningDatePage() {
     )
   }, [reservations, currentUserId])
 
-  const { tuesday, thursday } = getAvailableDates()
-  const isFirst = date === tuesday
-  const isSecond = date === thursday
+  const { prevDate, nextDate } = getNavigationDates(date || "")
 
   async function navTo(target: string) {
     router.push(`/planning/${target}`)
@@ -194,8 +219,8 @@ export default function PlanningDatePage() {
         <Button
           color="primary"
           size="sm"
-          onClick={() => navTo(tuesday)}
-          isDisabled={isFirst}
+          onClick={() => prevDate && navTo(prevDate)}
+          isDisabled={!prevDate}
         >
           <IoIosArrowBack />
         </Button>
@@ -205,8 +230,8 @@ export default function PlanningDatePage() {
         <Button
           color="primary"
           size="sm"
-          onClick={() => navTo(thursday)}
-          isDisabled={isSecond}
+          onClick={() => nextDate && navTo(nextDate)}
+          isDisabled={!nextDate}
         >
           <IoIosArrowForward />
         </Button>
