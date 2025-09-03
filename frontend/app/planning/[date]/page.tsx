@@ -8,6 +8,7 @@ import { notFound } from "next/navigation"
 import { IoIosArrowForward, IoIosArrowBack } from "react-icons/io"
 import { title } from "@/components/primitives"
 import { useAuth, authenticatedFetch } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 
 type Reservation = {
   id: string
@@ -66,6 +67,7 @@ function getDefaultDate(): string {
 }
 
 export default function PlanningDatePage() {
+  const router = useRouter()
   const auth = useAuth({
     requireAuth: true,
     requireProfile: true,
@@ -80,9 +82,10 @@ export default function PlanningDatePage() {
 
   useEffect(() => {
     if (!date || !isValidPlanningDate(date)) {
-      location.replace(`/planning/${getDefaultDate()}`)
+      router.replace(`/planning/${getDefaultDate()}`)
       return
     }
+
     const [y, m, d] = date.split("-").map(Number)
     const dt = new Date(y, m - 1, d)
     setDisplayDate(
@@ -137,7 +140,7 @@ export default function PlanningDatePage() {
   const isSecond = date === thursday
 
   async function navTo(target: string) {
-    location.replace(`/planning/${target}`)
+    router.push(`/planning/${target}`)
   }
 
   if (!displayDate) return null

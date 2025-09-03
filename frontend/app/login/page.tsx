@@ -7,8 +7,10 @@ import { Link } from "@heroui/link"
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
 import { useAuth, login } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 
 export default function LogInPage() {
+  const router = useRouter()
   const auth = useAuth()
   const [phone, setPhone] = useState<string>("")
   const [password, setPassword] = useState<string>("")
@@ -19,12 +21,12 @@ export default function LogInPage() {
   useEffect(() => {
     if (!auth.isLoading && auth.isLoggedIn) {
       if (auth.isProfileComplete) {
-        location.replace("/planning")
+        router.push("/planning")
       } else {
-        location.replace("/first-login")
+        router.push("/first-login")
       }
     }
-  }, [auth.isLoading, auth.isLoggedIn, auth.isProfileComplete])
+  }, [auth.isLoading, auth.isLoggedIn, auth.isProfileComplete, router])
 
   const isFormValid = (): boolean => {
     return phone !== "" && password !== ""
@@ -35,18 +37,28 @@ export default function LogInPage() {
     setIsSubmitting(true)
 
     const phoneNumber = phone.replace(/\D/g, "")
+    
+    // Debug logging
+    console.log("Attempting login with phone:", phoneNumber)
 
     const result = await login(phoneNumber, password)
 
     if (result.success) {
-      // Successful login
+      console.log("Login successful, profile complete:", result.isProfileComplete)
+      
+      // Add a small delay to ensure localStorage write completes on mobile
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Use window.location.href for a hard redirect to ensure full page reload
+      // This ensures the auth state is properly loaded from localStorage
       if (result.isProfileComplete) {
-        location.replace("/planning")
+        window.location.href = "/planning"
       } else {
-        location.replace("/first-login")
+        window.location.href = "/first-login"
       }
     } else {
       // Failed login
+      console.log("Login failed:", result.error)
       setIsInvalid(true)
       setIsSubmitting(false)
       addToast({
@@ -75,6 +87,7 @@ export default function LogInPage() {
           name="phone"
           value={phone}
           onChange={newValue => {
+            console.log("Phone input changed:", newValue)
             setIsInvalid(false)
             setPhone(newValue)
           }}
