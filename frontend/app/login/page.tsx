@@ -6,8 +6,12 @@ import { Form, Input, Button, addToast } from "@heroui/react"
 import { Link } from "@heroui/link"
 import PhoneInput from "@/components/phone-input"
 import { title } from "@/components/primitives"
-import { useAuth, login } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks/useAuth"
 import { useRouter } from "next/navigation"
+
+const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT
+const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 export default function LogInPage() {
   const router = useRouter()
@@ -16,6 +20,18 @@ export default function LogInPage() {
   const [password, setPassword] = useState<string>("")
   const [isInvalid, setIsInvalid] = useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  // Add to the top of your login page
+useEffect(() => {
+  // Check if localStorage is available
+  try {
+    localStorage.setItem('test', 'test')
+    localStorage.removeItem('test')
+    console.log('LocalStorage is available')
+  } catch (e) {
+    console.error('LocalStorage is NOT available:', e)
+  }
+}, [])
 
   // Redirect if already logged in
   useEffect(() => {
@@ -38,34 +54,63 @@ export default function LogInPage() {
 
     const phoneNumber = phone.replace(/\D/g, "")
 
-    // Debug logging
-    console.log("Attempting login with phone:", phoneNumber)
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phoneNumber, password })
+      })
 
-    const result = await login(phoneNumber, password)
+      if (!response.ok) {
+        setIsInvalid(true)
+        setIsSubmitting(false)
+        addToast({
+          title: "Numéro de téléphone ou mot de passe incorrect.",
+          color: "danger"
+        })
+        return
+      }
 
-    if (result.success) {
-      console.log(
-        "Login successful, profile complete:",
-        result.isProfileComplete
-      )
+      const data = await response.json()
 
-      // Add a small delay to ensure localStorage write completes on mobile
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Store auth data directly
+      const authData = {
+        token: data.token,
+        userId: data.id,
+        phone: data.phone,
+        isProfileComplete: data.is_profile_complete,
+        isAdmin: data.is_admin,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000
+      }
 
-      // Use window.location.href for a hard redirect to ensure full page reload
-      // This ensures the auth state is properly loaded from localStorage
-      if (result.isProfileComplete) {
+      // Use a try-catch for localStorage to handle any mobile issues
+      try {
+        localStorage.setItem("beach_garden_auth", JSON.stringify(authData))
+      } catch (storageError) {
+        console.error("Failed to store auth data:", storageError)
+        addToast({
+          title: "Erreur de stockage. Veuillez réessayer.",
+          color: "danger"
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Wait a moment for storage to complete on mobile
+      await new Promise(resolve => setTimeout(resolve, 200))
+
+      // Use window.location for a complete page reload
+      // This ensures the auth state is properly loaded
+      if (data.is_profile_complete) {
         window.location.href = "/planning"
       } else {
         window.location.href = "/first-login"
       }
-    } else {
-      // Failed login
-      console.log("Login failed:", result.error)
-      setIsInvalid(true)
+    } catch (error) {
+      console.error("Login error:", error)
       setIsSubmitting(false)
       addToast({
-        title: "Numéro de téléphone ou mot de passe incorrect.",
+        title: "Erreur de connexion. Veuillez réessayer.",
         color: "danger"
       })
     }
@@ -90,7 +135,6 @@ export default function LogInPage() {
           name="phone"
           value={phone}
           onChange={newValue => {
-            console.log("Phone input changed:", newValue)
             setIsInvalid(false)
             setPhone(newValue)
           }}
