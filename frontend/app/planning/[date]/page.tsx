@@ -26,40 +26,38 @@ const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 function getAvailableDates(): { tuesday: string; thursday: string } {
   const today = new Date()
-  const dow = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  
+  const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
   let tuesday: Date
   let thursday: Date
 
-  // Monday (1), Tuesday (2), Wednesday (3) - Show this week's Tuesday and Thursday
-  if (dow >= 1 && dow <= 3) {
-    // Get this week's Tuesday
+  if (dayOfWeek === 1 || dayOfWeek === 2) {
+    // Monday or Tuesday - Show this week's Tuesday and Thursday
     tuesday = new Date(today)
-    const daysToTuesday = 2 - dow // Can be negative if today is Wed
+    const daysToTuesday = 2 - dayOfWeek // 1 for Monday, 0 for Tuesday
     tuesday.setDate(today.getDate() + daysToTuesday)
-    
-    // Get this week's Thursday
+
     thursday = new Date(today)
-    const daysToThursday = 4 - dow
+    const daysToThursday = 4 - dayOfWeek // 3 for Monday, 2 for Tuesday
     thursday.setDate(today.getDate() + daysToThursday)
-  }
-  // Thursday (4) - Show today and next Tuesday
-  else if (dow === 4) {
-    thursday = new Date(today) // Today is Thursday
-    
-    tuesday = new Date(today)
-    tuesday.setDate(today.getDate() + 5) // Next Tuesday
-  }
-  // Friday (5), Saturday (6), Sunday (0) - Show next week's Tuesday and Thursday
-  else {
-    // Calculate days until next Tuesday
-    let daysUntilTuesday = dow === 0 ? 2 : (9 - dow) // Sunday: 2 days, Friday: 4, Saturday: 3
-    
-    tuesday = new Date(today)
-    tuesday.setDate(today.getDate() + daysUntilTuesday)
-    
+  } else if (dayOfWeek === 3 || dayOfWeek === 4) {
+    // Wednesday or Thursday - Show this week's Thursday and next week's Tuesday
     thursday = new Date(today)
-    thursday.setDate(today.getDate() + daysUntilTuesday + 2)
+    const daysToThursday = 4 - dayOfWeek // 1 for Wednesday, 0 for Thursday
+    thursday.setDate(today.getDate() + daysToThursday)
+
+    tuesday = new Date(today)
+    const daysToNextTuesday = 7 - dayOfWeek + 2 // 6 for Wednesday, 5 for Thursday
+    tuesday.setDate(today.getDate() + daysToNextTuesday)
+  } else {
+    // Friday, Saturday, or Sunday - Show next week's Tuesday and Thursday
+    const daysToNextTuesday = dayOfWeek === 0 ? 2 : 9 - dayOfWeek // 2 for Sunday, 4 for Friday, 3 for Saturday
+
+    tuesday = new Date(today)
+    tuesday.setDate(today.getDate() + daysToNextTuesday)
+
+    thursday = new Date(today)
+    thursday.setDate(today.getDate() + daysToNextTuesday + 2)
   }
 
   return {
@@ -68,31 +66,30 @@ function getAvailableDates(): { tuesday: string; thursday: string } {
   }
 }
 
+function getDefaultDate(): string {
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+
+  // If today is Tuesday or Thursday, use today
+  if (dayOfWeek === 2 || dayOfWeek === 4) {
+    return today.toISOString().split("T")[0]
+  }
+
+  // If today is Wednesday, use this week's Thursday
+  if (dayOfWeek === 3) {
+    const thursday = new Date(today)
+    thursday.setDate(today.getDate() + 1)
+    return thursday.toISOString().split("T")[0]
+  }
+
+  // For all other days (Monday, Friday, Saturday, Sunday), return the soonest Tuesday
+  const { tuesday } = getAvailableDates()
+  return tuesday
+}
+
 function isValidPlanningDate(d: string): boolean {
   const { tuesday, thursday } = getAvailableDates()
   return d === tuesday || d === thursday
-}
-
-function getDefaultDate(): string {
-  const today = new Date()
-  const dow = today.getDay()
-  
-  // If today is Tuesday or Thursday, use today
-  if (dow === 2 || dow === 4) {
-    return today.toISOString().split("T")[0]
-  }
-  
-  // If Monday or Wednesday, use this week's Tuesday
-  if (dow === 1 || dow === 3) {
-    const tuesday = new Date(today)
-    const daysToTuesday = 2 - dow
-    tuesday.setDate(today.getDate() + daysToTuesday)
-    return tuesday.toISOString().split("T")[0]
-  }
-  
-  // If Friday, Saturday, or Sunday, use next Tuesday
-  const { tuesday } = getAvailableDates()
-  return tuesday
 }
 
 export default function PlanningDatePage() {
