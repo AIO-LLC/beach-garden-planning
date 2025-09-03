@@ -1,5 +1,6 @@
 use crate::api::auth;
 use crate::api::wrappers;
+use axum::http::HeaderMap;
 use axum::http::HeaderValue;
 use axum::http::header::AUTHORIZATION;
 use axum::http::header::CONTENT_TYPE;
@@ -249,6 +250,16 @@ pub async fn router(app_state: AppState) -> Router {
         .route("/verify-token", get(auth::verify_token)) // New endpoint for token verification
         .route("/refresh-jwt", post(auth::refresh_jwt))
         .route("/password-forgotten", post(auth::password_forgotten))
+        // Add to your router in app.rs
+        .route(
+            "/test-auth",
+            get(|headers: HeaderMap| async move {
+                match auth::extract_token_from_headers(&headers) {
+                    Ok(token) => (StatusCode::OK, format!("Token found: {token}")),
+                    Err(_) => (StatusCode::UNAUTHORIZED, "No token".to_string()),
+                }
+            }),
+        )
         .with_state(app_state)
         .layer(
             TraceLayer::new_for_http()
