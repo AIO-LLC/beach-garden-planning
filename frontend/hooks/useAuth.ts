@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST!
@@ -39,20 +39,12 @@ const getStoredAuth = (): StoredAuth | null => {
 
   try {
     const stored = localStorage.getItem(AUTH_KEY)
-    if (!stored) {
-      console.log("No auth data found in localStorage")
-      return null
-    }
+    if (!stored) return null
 
     const auth = JSON.parse(stored) as StoredAuth
-    console.log("Auth data retrieved:", {
-      ...auth,
-      token: auth.token ? "exists" : "missing"
-    })
 
     // Check if token is expired
     if (Date.now() > auth.expiresAt) {
-      console.log("Token expired, clearing auth")
       localStorage.removeItem(AUTH_KEY)
       return null
     }
@@ -67,15 +59,7 @@ const getStoredAuth = (): StoredAuth | null => {
 
 const setStoredAuth = (auth: StoredAuth): void => {
   try {
-    const authString = JSON.stringify(auth)
-    localStorage.setItem(AUTH_KEY, authString)
-
-    // Force a storage event for mobile browsers
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("storage"))
-    }
-
-    console.log("Auth data stored successfully")
+    localStorage.setItem(AUTH_KEY, JSON.stringify(auth))
   } catch (error) {
     console.error("Error storing auth:", error)
   }
@@ -83,10 +67,6 @@ const setStoredAuth = (auth: StoredAuth): void => {
 
 const clearStoredAuth = (): void => {
   localStorage.removeItem(AUTH_KEY)
-  // Force a storage event for mobile browsers
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("storage"))
-  }
 }
 
 // Export for use in other components
@@ -113,7 +93,6 @@ export const logout = async (): Promise<void> => {
   }
 
   clearStoredAuth()
-  // Use window.location.href for hard redirect
   window.location.href = "/login"
 }
 
@@ -126,151 +105,121 @@ export function useAuth(options: UseAuthOptions = {}) {
   })
 
   const router = useRouter()
-
-  const verifyAuth = useCallback(async () => {
-    console.log("Verifying auth...")
-
-    try {
-      const storedAuth = getStoredAuth()
-
-      if (!storedAuth) {
-        console.log("No stored auth found")
-        setAuthState({
-          isLoading: false,
-          isLoggedIn: false,
-          isProfileComplete: false,
-          isAdmin: false
-        })
-
-        if (options.requireAuth) {
-          router.replace(options.redirectTo || "/login")
-        }
-        return
-      }
-
-      console.log("Verifying token with backend...")
-
-      // Verify token with backend
-      const response = await fetch(`${API_URL}/verify-token`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${storedAuth.token}`
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log("Token verified successfully")
-
-        const newState = {
-          isLoading: false,
-          isLoggedIn: true,
-          isProfileComplete: data.is_profile_complete,
-          isAdmin: data.is_admin,
-          userId: data.id,
-          phone: data.phone
-        }
-
-        setAuthState(newState)
-
-        // Update stored auth with fresh data
-        setStoredAuth({
-          ...storedAuth,
-          isProfileComplete: data.is_profile_complete,
-          isAdmin: data.is_admin
-        })
-
-        // Handle redirects based on auth state
-        if (options.requireAuth && !newState.isLoggedIn) {
-          router.replace(options.redirectTo || "/login")
-          return
-        }
-
-        if (
-          options.requireProfile &&
-          (!newState.isLoggedIn || !newState.isProfileComplete)
-        ) {
-          router.replace("/first-login")
-          return
-        }
-
-        if (
-          options.requireAdmin &&
-          (!newState.isLoggedIn || !newState.isAdmin)
-        ) {
-          router.replace("/")
-          return
-        }
-      } else {
-        console.log("Token verification failed:", response.status)
-        // Token is invalid
-        clearStoredAuth()
-        setAuthState({
-          isLoading: false,
-          isLoggedIn: false,
-          isProfileComplete: false,
-          isAdmin: false
-        })
-
-        if (options.requireAuth) {
-          router.replace(options.redirectTo || "/login")
-        }
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error)
-      clearStoredAuth()
-      setAuthState({
-        isLoading: false,
-        isLoggedIn: false,
-        isProfileComplete: false,
-        isAdmin: false
-      })
-
-      if (options.requireAuth) {
-        router.replace(options.redirectTo || "/login")
-      }
-    }
-  }, [
-    options.requireAuth,
-    options.requireProfile,
-    options.requireAdmin,
-    options.redirectTo,
-    router
-  ])
+  const hasVerified = useRef(false)
+  const isMounted = useRef(true)
 
   useEffect(() => {
-    // Add a small delay for mobile browsers to ensure localStorage is ready
+    isMounted.current = true
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    // Prevent multiple verifications
+    if (hasVerified.current) return
+    
+    const verifyAuth = async () => {
+      try {
+        const storedAuth = getStoredAuth()
+
+        if (!storedAuth) {
+          if (isMounted.current) {
+            setAuthState({
+              isLoading: false,
+              isLoggedIn: false,
+              isProfileComplete: false,
+              isAdmin: false
+            })
+          }
+
+          if (options.requireAuth && isMounted.current) {
+            router.replace(options.redirectTo || "/login")
+          }
+          return
+        }
+
+        // Verify token with backend
+        const response = await fetch(`${API_URL}/verify-token`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${storedAuth.token}`
+          }
+        })
+
+        if (!isMounted.current) return
+
+        if (response.ok) {
+          const data = await response.json()
+
+          const newState = {
+            isLoading: false,
+            isLoggedIn: true,
+            isProfileComplete: data.is_profile_complete,
+            isAdmin: data.is_admin,
+            userId: data.id,
+            phone: data.phone
+          }
+
+          setAuthState(newState)
+
+          // Update stored auth with fresh data
+          setStoredAuth({
+            ...storedAuth,
+            isProfileComplete: data.is_profile_complete,
+            isAdmin: data.is_admin
+          })
+
+          // Handle redirects based on auth state
+          if (options.requireProfile && !newState.isProfileComplete) {
+            router.replace("/first-login")
+            return
+          }
+
+          if (options.requireAdmin && !newState.isAdmin) {
+            router.replace("/")
+            return
+          }
+        } else {
+          // Token is invalid
+          clearStoredAuth()
+          
+          if (isMounted.current) {
+            setAuthState({
+              isLoading: false,
+              isLoggedIn: false,
+              isProfileComplete: false,
+              isAdmin: false
+            })
+
+            if (options.requireAuth) {
+              router.replace(options.redirectTo || "/login")
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error)
+        
+        if (isMounted.current) {
+          // Don't clear auth on network errors - just set loading to false
+          setAuthState(prev => ({
+            ...prev,
+            isLoading: false
+          }))
+        }
+      }
+    }
+
+    // Mark as verified before starting
+    hasVerified.current = true
+    
+    // Add small delay for mobile browsers
     const timer = setTimeout(() => {
       verifyAuth()
-    }, 50)
+    }, 100)
 
     return () => clearTimeout(timer)
-  }, [verifyAuth])
-
-  // Listen for storage events (for cross-tab synchronization)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      console.log("Storage event detected, re-verifying auth")
-      verifyAuth()
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
-  }, [verifyAuth])
-
-  // Refresh token periodically (every 20 minutes)
-  useEffect(() => {
-    if (!authState.isLoggedIn) return
-
-    const refreshInterval = setInterval(
-      () => {
-        verifyAuth()
-      },
-      20 * 60 * 1000
-    )
-
-    return () => clearInterval(refreshInterval)
-  }, [authState.isLoggedIn, verifyAuth])
+  }, []) // Empty dependency array - run once on mount
 
   return authState
 }
@@ -285,8 +234,6 @@ export const login = async (
   error?: string
 }> => {
   try {
-    console.log("Sending login request...")
-
     const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -294,31 +241,20 @@ export const login = async (
     })
 
     if (!response.ok) {
-      console.log("Login response not OK:", response.status)
       return { success: false, error: "Invalid credentials" }
     }
 
     const data = await response.json()
-    console.log("Login response received, storing auth data...")
 
-    // Store auth data with proper sync
-    const authData: StoredAuth = {
+    // Store auth data
+    setStoredAuth({
       token: data.token,
       userId: data.id,
       phone: data.phone,
       isProfileComplete: data.is_profile_complete,
       isAdmin: data.is_admin,
       expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-    }
-
-    setStoredAuth(authData)
-
-    // Double-check the data was stored (for mobile debugging)
-    const stored = getStoredAuth()
-    if (!stored) {
-      console.error("Failed to store auth data")
-      return { success: false, error: "Storage failed" }
-    }
+    })
 
     return {
       success: true,
