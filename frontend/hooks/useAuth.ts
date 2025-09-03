@@ -118,7 +118,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   useEffect(() => {
     // Prevent multiple verifications
     if (hasVerified.current) return
-    
+
     const verifyAuth = async () => {
       try {
         const storedAuth = getStoredAuth()
@@ -183,7 +183,7 @@ export function useAuth(options: UseAuthOptions = {}) {
         } else {
           // Token is invalid
           clearStoredAuth()
-          
+
           if (isMounted.current) {
             setAuthState({
               isLoading: false,
@@ -199,7 +199,7 @@ export function useAuth(options: UseAuthOptions = {}) {
         }
       } catch (error) {
         console.error("Auth check failed:", error)
-        
+
         if (isMounted.current) {
           // Don't clear auth on network errors - just set loading to false
           setAuthState(prev => ({
@@ -212,7 +212,7 @@ export function useAuth(options: UseAuthOptions = {}) {
 
     // Mark as verified before starting
     hasVerified.current = true
-    
+
     // Add small delay for mobile browsers
     const timer = setTimeout(() => {
       verifyAuth()
