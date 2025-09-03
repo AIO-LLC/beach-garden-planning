@@ -13,16 +13,27 @@ use lambda_http::run;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // Initialize tracing for both local and production
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                // Default to info level, but show debug for backend modules
-                "info,backend=debug,tower_http=debug".into()
-            }),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    #[cfg(feature = "local")]
+    {
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "info,backend=debug,tower_http=debug".into()),
+            )
+            .with(tracing_subscriber::fmt::layer())
+            .init();
+    }
+
+    #[cfg(not(feature = "local"))]
+    {
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "info,backend=info".into()),
+            )
+            .with(tracing_subscriber::fmt::layer().json().with_ansi(false))
+            .init();
+    }
 
     #[cfg(feature = "local")]
     {
