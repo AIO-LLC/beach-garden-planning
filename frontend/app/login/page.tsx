@@ -21,18 +21,6 @@ export default function LogInPage() {
   const [isInvalid, setIsInvalid] = useState<boolean>(false)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
-  // Add to the top of your login page
-  useEffect(() => {
-    // Check if localStorage is available
-    try {
-      localStorage.setItem("test", "test")
-      localStorage.removeItem("test")
-      console.log("LocalStorage is available")
-    } catch (e) {
-      console.error("LocalStorage is NOT available:", e)
-    }
-  }, [])
-
   // Redirect if already logged in
   useEffect(() => {
     if (!auth.isLoading && auth.isLoggedIn) {

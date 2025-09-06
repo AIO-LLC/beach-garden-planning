@@ -26,7 +26,9 @@ const API_URL = API_PORT ? `${API_HOST}:${API_PORT}` : API_HOST
 
 function getAvailableDates(): { tuesday: string; thursday: string } {
   const today = new Date()
+  console.log(today)
   const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  console.log(dayOfWeek)
 
   let tuesday: Date
   let thursday: Date
@@ -34,6 +36,7 @@ function getAvailableDates(): { tuesday: string; thursday: string } {
   if (dayOfWeek === 1 || dayOfWeek === 2) {
     // Monday or Tuesday - Show this week's Tuesday and Thursday
     tuesday = new Date(today)
+    console.log(tuesday)
     const daysToTuesday = 2 - dayOfWeek // 1 for Monday, 0 for Tuesday
     tuesday.setDate(today.getDate() + daysToTuesday)
 
@@ -51,7 +54,7 @@ function getAvailableDates(): { tuesday: string; thursday: string } {
     tuesday.setDate(today.getDate() + daysToNextTuesday)
   } else {
     // Friday, Saturday, or Sunday - Show next week's Tuesday and Thursday
-    const daysToNextTuesday = dayOfWeek === 0 ? 2 : 9 - dayOfWeek // 2 for Sunday, 4 for Friday, 3 for Saturday
+    const daysToNextTuesday = dayOfWeek === 0 ? 3 : 10 - dayOfWeek // 2 for Sunday, 4 for Friday, 3 for Saturday
 
     tuesday = new Date(today)
     tuesday.setDate(today.getDate() + daysToNextTuesday)
