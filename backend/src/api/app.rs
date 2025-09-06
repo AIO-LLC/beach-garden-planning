@@ -22,37 +22,9 @@ use thiserror::Error;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 
-#[cfg(not(feature = "local"))]
-use {rustls::RootCertStore, std::io::BufReader, tokio_postgres_rustls::MakeRustlsConnect};
-
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool,
-}
-
-#[cfg(not(feature = "local"))]
-const RDS_CA_CERT: &[u8] = include_bytes!("../../certs/us-east-1-bundle.pem");
-
-#[cfg(not(feature = "local"))]
-fn create_rds_connector() -> MakeRustlsConnect {
-    let mut root_store = RootCertStore::empty();
-
-    // Parse the PEM certificates
-    let mut pem = BufReader::new(RDS_CA_CERT);
-    let certs = rustls_pemfile::certs(&mut pem);
-
-    // Add certificates to the root store
-    for cert in certs {
-        root_store
-            .add(cert.expect("Failed to parse PEM file"))
-            .expect("Failed to add certificate");
-    }
-
-    let config = rustls::ClientConfig::builder()
-        .with_root_certificates(root_store)
-        .with_no_client_auth();
-
-    MakeRustlsConnect::new(config)
 }
 
 pub async fn build_state() -> AppState {
@@ -72,7 +44,7 @@ pub async fn build_state() -> AppState {
     .unwrap();
 
     let mut cfg = deadpool_postgres::Config::new();
-    cfg.host = Some(postgres_host);
+    cfg.host = Some(postgres_host.clone());
     cfg.user = Some(postgres_user);
     cfg.dbname = Some(postgres_db);
     cfg.password = Some(postgres_password);
@@ -93,11 +65,46 @@ pub async fn build_state() -> AppState {
 
     #[cfg(not(feature = "local"))]
     {
-        // For production, use SSL with RDS certificates
-        cfg.ssl_mode = Some(deadpool_postgres::SslMode::Require);
-        let connector = create_rds_connector();
-        let pool = cfg.create_pool(Some(Runtime::Tokio1), connector).unwrap();
-        AppState { pool }
+        // For production with Supabase
+        if postgres_host.contains("supabase") {
+            tracing::info!("Connecting to Supabase database...");
+
+            // For Supabase, we need to accept their certificate
+            cfg.ssl_mode = Some(deadpool_postgres::SslMode::Require);
+
+            // Create a TLS connector that accepts Supabase's certificate
+            let connector = native_tls::TlsConnector::builder()
+                .danger_accept_invalid_certs(true) // Required for Supabase
+                .build()
+                .expect("Failed to create TLS connector");
+
+            let connector = postgres_native_tls::MakeTlsConnector::new(connector);
+
+            let pool = cfg
+                .create_pool(Some(Runtime::Tokio1), connector)
+                .expect("Failed to create pool with Supabase");
+
+            tracing::info!("Successfully connected to Supabase database");
+            AppState { pool }
+        } else {
+            // For other providers or if you want to disable SSL
+            tracing::info!("Connecting to non-Supabase database...");
+            cfg.ssl_mode = Some(deadpool_postgres::SslMode::Prefer);
+
+            // Use native TLS with relaxed certificate validation
+            let connector = native_tls::TlsConnector::builder()
+                .danger_accept_invalid_certs(true)
+                .build()
+                .expect("Failed to create TLS connector");
+
+            let connector = postgres_native_tls::MakeTlsConnector::new(connector);
+
+            let pool = cfg
+                .create_pool(Some(Runtime::Tokio1), connector)
+                .expect("Failed to create pool");
+
+            AppState { pool }
+        }
     }
 }
 
@@ -213,7 +220,7 @@ pub async fn router(app_state: AppState) -> Router {
         .allow_credentials(true);
 
     Router::new()
-        // Member routes - these should be protected with auth middleware
+        // Member routes
         .route(
             "/member",
             post(wrappers::member::add_member).patch(wrappers::member::update_member),
@@ -229,7 +236,7 @@ pub async fn router(app_state: AppState) -> Router {
         )
         .route("/password", patch(wrappers::member::update_password))
         .route("/password-reset", patch(wrappers::member::password_reset))
-        // Reservation routes - these should be protected with auth middleware
+        // Reservation routes
         .route(
             "/reservation",
             patch(wrappers::reservation::update_reservation)
@@ -247,15 +254,14 @@ pub async fn router(app_state: AppState) -> Router {
         // Authentication routes
         .route("/login", post(auth::login))
         .route("/logout", post(auth::logout))
-        .route("/verify-token", get(auth::verify_token)) // New endpoint for token verification
+        .route("/verify-token", get(auth::verify_token))
         .route("/refresh-jwt", post(auth::refresh_jwt))
         .route("/password-forgotten", post(auth::password_forgotten))
-        // Add to your router in app.rs
         .route(
             "/test-auth",
             get(|headers: HeaderMap| async move {
                 match auth::extract_token_from_headers(&headers) {
-                    Ok(token) => (StatusCode::OK, format!("Token found: {token}")),
+                    Ok(_token) => (StatusCode::OK, "Token found".to_string()),
                     Err(_) => (StatusCode::UNAUTHORIZED, "No token".to_string()),
                 }
             }),
