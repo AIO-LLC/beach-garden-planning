@@ -1,5 +1,6 @@
 export function getAvailableDates(): { tuesday: string; thursday: string } {
   const today = new Date()
+  console.log(today)
   const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 
   let tuesday: Date
@@ -36,9 +37,17 @@ export function getAvailableDates(): { tuesday: string; thursday: string } {
   }
 
   return {
-    tuesday: tuesday.toISOString().split("T")[0],
-    thursday: thursday.toISOString().split("T")[0]
+    tuesday: formatLocalDate(tuesday),
+    thursday: formatLocalDate(thursday)
   }
+}
+
+// Helper function to format date in local timezone
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 export function getDefaultDate(): string {
@@ -47,14 +56,14 @@ export function getDefaultDate(): string {
 
   // If today is Tuesday or Thursday, use today
   if (dayOfWeek === 2 || dayOfWeek === 4) {
-    return today.toISOString().split("T")[0]
+    return formatLocalDate(today)
   }
 
   // If today is Wednesday, use this week's Thursday
   if (dayOfWeek === 3) {
     const thursday = new Date(today)
     thursday.setDate(today.getDate() + 1)
-    return thursday.toISOString().split("T")[0]
+    return formatLocalDate(thurday)
   }
 
   // For all other days (Monday, Friday, Saturday, Sunday), return the soonest Tuesday
