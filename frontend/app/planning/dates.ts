@@ -63,7 +63,7 @@ export function getDefaultDate(): string {
   if (dayOfWeek === 3) {
     const thursday = new Date(today)
     thursday.setDate(today.getDate() + 1)
-    return formatLocalDate(thurday)
+    return formatLocalDate(thursday)
   }
 
   // For all other days (Monday, Friday, Saturday, Sunday), return the soonest Tuesday
