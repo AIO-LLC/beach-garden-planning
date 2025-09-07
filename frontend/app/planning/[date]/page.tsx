@@ -47,14 +47,14 @@ function getAvailableDates(): { tuesday: string; thursday: string } {
     // Wednesday or Thursday - Show this week's Thursday and next week's Tuesday
     thursday = new Date(today)
     const daysToThursday = 4 - dayOfWeek // 1 for Wednesday, 0 for Thursday
-    thursday.setDate(today.getDate() + daysToThursday)
+    thursday.setDate(today.getDate() + daysToThursday) 
 
     tuesday = new Date(today)
     const daysToNextTuesday = 7 - dayOfWeek + 2 // 6 for Wednesday, 5 for Thursday
     tuesday.setDate(today.getDate() + daysToNextTuesday)
   } else {
     // Friday, Saturday, or Sunday - Show next week's Tuesday and Thursday
-    const daysToNextTuesday = dayOfWeek === 0 ? 3 : 10 - dayOfWeek // 2 for Sunday, 4 for Friday, 3 for Saturday
+    const daysToNextTuesday = dayOfWeek === 0 ? 2 : 9 - dayOfWeek // 2 for Sunday, 4 for Friday, 3 for Saturday
 
     tuesday = new Date(today)
     tuesday.setDate(today.getDate() + daysToNextTuesday)
