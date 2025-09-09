@@ -203,9 +203,18 @@ pub async fn router(app_state: AppState) -> Router {
 
     #[cfg(not(feature = "local"))]
     {
-        let public_url: &str =
-            &env::var("PUBLIC_URL").expect("Undefined PUBLIC_URL environment variable");
-        cors = cors.allow_origin(HeaderValue::from_str(public_url).expect("Invalid origin header"));
+        let custom_domain_url: &str = &env::var("CUSTOM_DOMAIN_URL")
+            .expect("Undefined CUSTOM_DOMAIN_URL environment variable");
+        let amplify_url: &str =
+            &env::var("AMPLIFY_URL").expect("Undefined AMPLIFY_URL environment variable");
+
+        cors = cors.allow_origin([
+            HeaderValue::from_str(&format!("https://{custom_domain_url}"))
+                .expect("Invalid custom domain URL"),
+            HeaderValue::from_str(&format!("https://www.{custom_domain_url}"))
+                .expect("Invalid custom domain URL with www."),
+            HeaderValue::from_str(&format!("https://{amplify_url}")).expect("Invalid Amplify URL"),
+        ]);
     }
 
     cors = cors
