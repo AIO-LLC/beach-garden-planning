@@ -185,50 +185,8 @@ impl IntoResponse for ApiError {
 
 pub async fn router(app_state: AppState) -> Router {
     dotenv().ok();
-    let mut cors = CorsLayer::new();
 
-    #[cfg(feature = "local")]
-    {
-        let frontend_ip: &str =
-            &env::var("FRONTEND_IP").expect("Undefined FRONTEND_IP environment variable");
-        let frontend_port: u16 = str::parse(
-            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable"),
-        )
-        .unwrap();
-        cors = cors.allow_origin(
-            HeaderValue::from_str(&format!("http://{frontend_ip}:{frontend_port}"))
-                .expect("Invalid origin header"),
-        );
-    }
-
-    #[cfg(not(feature = "local"))]
-    {
-        let custom_domain_url: &str = &env::var("CUSTOM_DOMAIN_URL")
-            .expect("Undefined CUSTOM_DOMAIN_URL environment variable");
-        let amplify_url: &str =
-            &env::var("AMPLIFY_URL").expect("Undefined AMPLIFY_URL environment variable");
-
-        cors = cors.allow_origin([
-            HeaderValue::from_str(&format!("https://{custom_domain_url}"))
-                .expect("Invalid custom domain URL"),
-            HeaderValue::from_str(&format!("https://www.{custom_domain_url}"))
-                .expect("Invalid custom domain URL with www."),
-            HeaderValue::from_str(&format!("https://{amplify_url}")).expect("Invalid Amplify URL"),
-        ]);
-    }
-
-    cors = cors
-        .allow_methods(vec![
-            Method::GET,
-            Method::POST,
-            Method::PATCH,
-            Method::DELETE,
-        ])
-        .allow_headers([AUTHORIZATION, CONTENT_TYPE])
-        .expose_headers([CONTENT_TYPE])
-        .allow_credentials(true);
-
-    Router::new()
+    let mut router = Router::new()
         // Member routes
         .route(
             "/member",
@@ -316,6 +274,34 @@ pub async fn router(app_state: AppState) -> Router {
                         tracing::error!("Request failed after {:?} - Error: {:?}", latency, error);
                     },
                 ),
+        );
+
+    #[cfg(feature = "local")]
+    {
+        let frontend_ip: &str =
+            &env::var("FRONTEND_IP").expect("Undefined FRONTEND_IP environment variable");
+        let frontend_port: u16 = str::parse(
+            &env::var("FRONTEND_PORT").expect("Undefined FRONTEND_PORT environment variable"),
         )
-        .layer(cors)
+        .unwrap();
+
+        let cors = CorsLayer::new()
+            .allow_origin(
+                HeaderValue::from_str(&format!("http://{frontend_ip}:{frontend_port}"))
+                    .expect("Invalid origin header"),
+            )
+            .allow_methods(vec![
+                Method::GET,
+                Method::POST,
+                Method::PATCH,
+                Method::DELETE,
+            ])
+            .allow_headers([AUTHORIZATION, CONTENT_TYPE])
+            .expose_headers([CONTENT_TYPE])
+            .allow_credentials(true);
+
+        router = router.layer(cors)
+    }
+
+    router
 }
