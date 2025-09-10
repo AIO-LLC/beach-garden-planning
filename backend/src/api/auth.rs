@@ -205,8 +205,8 @@ pub async fn password_forgotten(
 
     #[cfg(not(feature = "local"))]
     {
-        let public_url: &str =
-            &env::var("PUBLIC_URL").expect("Undefined PUBLIC_URL environment variable");
+        let public_url: &str = &env::var("CUSTOM_DOMAIN_URL")
+            .expect("Undefined CUSTOM_DOMAIN_URL environment variable");
 
         base_url = public_url.to_string();
     }
