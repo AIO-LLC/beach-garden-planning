@@ -191,6 +191,8 @@ export default function AdminPanelPage() {
             "Impossible de charger les membres. Veuillez contacter l'équipe technique.",
           color: "danger"
         })
+
+        return
       }
 
       const data: PaginatedResponse = await res.json()
