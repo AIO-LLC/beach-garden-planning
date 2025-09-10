@@ -72,7 +72,7 @@ export default function AdminPanelPage() {
 
   const [members, setMembers] = useState<Member[]>([])
   const [page, setPage] = useState(1)
-  const [perPage] = useState(10)
+  const [perPage] = useState(1)
   const [total, setTotal] = useState(0)
   const pages = Math.ceil(total / perPage)
 
