@@ -183,8 +183,9 @@ export default function AdminPanelPage() {
         { method: "GET" }
       )
       if (!res.ok) {
-        const error = await res.json()
+        const error = await res.text()
         console.error(error)
+
         addToast({
           title:
             "Impossible de charger les membres. Veuillez contacter l'équipe technique.",
