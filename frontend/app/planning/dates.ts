@@ -1,6 +1,5 @@
 export function getAvailableDates(): { tuesday: string; thursday: string } {
   const today = new Date()
-  console.log(today)
   const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
 
   let tuesday: Date
@@ -9,7 +8,6 @@ export function getAvailableDates(): { tuesday: string; thursday: string } {
   if (dayOfWeek === 1 || dayOfWeek === 2) {
     // Monday or Tuesday - Show this week's Tuesday and Thursday
     tuesday = new Date(today)
-    console.log(tuesday)
     const daysToTuesday = 2 - dayOfWeek // 1 for Monday, 0 for Tuesday
     tuesday.setDate(today.getDate() + daysToTuesday)
 
