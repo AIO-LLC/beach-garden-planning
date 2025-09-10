@@ -76,14 +76,12 @@ pub async fn get_member_by_email(client: &Client, email: &String) -> Result<Memb
     })
 }
 
-// Get total count of members
 pub async fn get_members_count(client: &Client) -> Result<u32, Error> {
     let row = client.query_one("SELECT COUNT(*) FROM member", &[]).await?;
     let count: i64 = row.get(0);
     Ok(count as u32)
 }
 
-// Get paginated members
 pub async fn get_members_paginated(
     client: &Client,
     page: u32,
@@ -93,7 +91,7 @@ pub async fn get_members_paginated(
 
     let rows: Vec<Row> = client
         .query(
-            "SELECT * FROM member ORDER BY id LIMIT $1 OFFSET $2",
+            "SELECT * FROM member LIMIT $1 OFFSET $2",
             &[&(per_page as i64), &(offset as i64)],
         )
         .await?;
